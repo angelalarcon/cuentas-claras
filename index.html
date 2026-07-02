@@ -4,8 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>El Payino y el Papi</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1a73e8">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Payino y Papi">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Pirata+One&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -46,6 +53,18 @@
 
   .face-zoom { transform: scale(1.9); transform-origin: 50% 22%; }
 
+  .fairy-title {
+    font-family: 'Pirata One', cursive;
+    color: #c81e1e;
+    -webkit-text-stroke: 1.5px #1a1a1a;
+    text-shadow:
+      -1.5px -1.5px 0 #1a1a1a,
+       1.5px -1.5px 0 #1a1a1a,
+      -1.5px  1.5px 0 #1a1a1a,
+       1.5px  1.5px 0 #1a1a1a,
+       3px 4px 0 rgba(26, 26, 26, .25);
+  }
+
   .chevron { transition: transform .2s cubic-bezier(.4,0,.2,1); }
   .chevron.open { transform: rotate(180deg); }
 
@@ -75,15 +94,12 @@
 
     <!-- header -->
     <header class="mb-2">
-      <div class="flex items-center gap-3">
-        <div class="flex -space-x-1 shrink-0">
-          <span class="w-3 h-3 rounded-full bg-gblue block"></span>
-          <span class="w-3 h-3 rounded-full bg-gred block"></span>
-          <span class="w-3 h-3 rounded-full bg-gyellow block"></span>
-          <span class="w-3 h-3 rounded-full bg-ggreen block"></span>
-        </div>
-        <h1 class="text-2xl sm:text-3xl font-medium text-onsurface">El Payino y el Papi</h1>
-      </div>
+      <h1 class="fairy-title flex items-baseline flex-wrap gap-x-2">
+        <span class="text-lg sm:text-xl">El</span>
+        <span class="text-4xl sm:text-5xl">Payino</span>
+        <span class="text-lg sm:text-xl">y el</span>
+        <span class="text-4xl sm:text-5xl">Papi</span>
+      </h1>
     </header>
 
     <!-- switcher: choose who you are via URL -->
@@ -188,8 +204,14 @@
     </div>
   </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  const SUPABASE_URL = 'https://fjhwnypedexgnbkthrtt.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqaHdueXBlZGV4Z25ia3RocnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDUxMDAsImV4cCI6MjA5ODU4MTEwMH0.LBwYCefYXmfynB9SR2nUlJLdaJ4WcmWDmftluzSaQng';
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
   const STORAGE_KEY = 'elPayinoYElPapi_records';
+  const MIGRATION_FLAG = 'elPayinoYElPapi_migrated';
 
   const USERS = {
     Angel:  { name: 'Angel',  img: 'assets/angel.png',  title: 'Angel pagó' },
@@ -211,10 +233,46 @@
   let rawUser = (urlParams.get('user') || '').toLowerCase();
   let currentUser = rawUser === 'angel' ? 'Angel' : rawUser === 'nelson' ? 'Nelson' : null;
 
-  let records = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  let records = [];
 
-  function save() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  function rowToRecord(row) {
+    return {
+      id: row.id,
+      type: row.type,
+      description: row.description,
+      amount: Number(row.amount),
+      paidBy: row.paid_by,
+      contribution: Number(row.contribution),
+      date: row.created_at
+    };
+  }
+
+  // one-time upload of whatever was previously saved in this browser's localStorage
+  async function migrateLocalStorageIfNeeded() {
+    if (localStorage.getItem(MIGRATION_FLAG)) return;
+    const legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (legacy.length > 0) {
+      const rows = legacy.map(r => ({
+        type: r.type,
+        description: r.description,
+        amount: r.amount,
+        paid_by: r.paidBy,
+        contribution: r.contribution,
+        created_at: r.date
+      }));
+      const { error } = await supabaseClient.from('records').insert(rows);
+      if (error) console.error('migration failed', error);
+    }
+    localStorage.setItem(MIGRATION_FLAG, '1');
+  }
+
+  async function loadRecords() {
+    const { data, error } = await supabaseClient
+      .from('records')
+      .select('*')
+      .order('created_at', { ascending: true });
+    if (error) { console.error(error); return; }
+    records = data.map(rowToRecord);
   }
 
   function fmt(n) {
@@ -291,13 +349,14 @@
     }
   }
 
-  function deleteRecord(id) {
-    records = records.filter(r => r.id !== id);
-    save();
+  async function deleteRecord(id) {
+    const { error } = await supabaseClient.from('records').delete().eq('id', id);
+    if (error) { console.error(error); return; }
+    await loadRecords();
     render();
   }
 
-  function initApp() {
+  async function initApp() {
     document.getElementById('switcher').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
 
@@ -325,7 +384,7 @@
       else emptyState.classList.add('hidden');
     });
 
-    document.getElementById('expenseForm').addEventListener('submit', (e) => {
+    document.getElementById('expenseForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const description = document.getElementById('description').value.trim();
       const amount = parseFloat(document.getElementById('amount').value);
@@ -335,17 +394,16 @@
       // the person who paid is owed the full amount by the other person (no 50/50 split)
       const contribution = currentUser === 'Angel' ? amount : -amount;
 
-      records.push({
-        id: crypto.randomUUID(),
+      const { error } = await supabaseClient.from('records').insert({
         type: 'expense',
         description,
         amount,
-        paidBy: currentUser,
-        contribution,
-        date: new Date().toISOString()
+        paid_by: currentUser,
+        contribution
       });
+      if (error) { console.error(error); return; }
 
-      save();
+      await loadRecords();
       render();
       showPaymentAnimation(currentUser, amount, description);
 
@@ -353,7 +411,7 @@
       document.getElementById('description').focus();
     });
 
-    document.getElementById('settleBtn').addEventListener('click', () => {
+    document.getElementById('settleBtn').addEventListener('click', async () => {
       const balance = computeBalance();
       if (Math.abs(balance) < 0.005) return;
 
@@ -361,22 +419,31 @@
       const creditor = debtor === 'Nelson' ? 'Angel' : 'Nelson';
       const amount = Math.abs(balance);
 
-      records.push({
-        id: crypto.randomUUID(),
+      const { error } = await supabaseClient.from('records').insert({
         type: 'settlement',
         description: `Liquidación: ${debtor} le pagó a ${creditor}`,
         amount,
-        paidBy: debtor,
-        contribution: -balance,
-        date: new Date().toISOString()
+        paid_by: debtor,
+        contribution: -balance
       });
+      if (error) { console.error(error); return; }
 
-      save();
+      await loadRecords();
       render();
       showPaymentAnimation(debtor, amount, 'Liquidación de la deuda');
     });
 
+    await migrateLocalStorageIfNeeded();
+    await loadRecords();
     render();
+
+    supabaseClient
+      .channel('records-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, async () => {
+        await loadRecords();
+        render();
+      })
+      .subscribe();
   }
 
   let hideTimeout = null;
@@ -422,6 +489,12 @@
 
   if (currentUser) {
     initApp();
+  }
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
   }
 </script>
 </body>

@@ -1,327 +1,638 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>El Payino y el Papi</title>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#1a73e8">
-<link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Payino y Papi">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Pirata+One&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<script>
-  tailwind.config = {
-    theme: {
-      extend: {
-        colors: {
-          gblue: { DEFAULT: '#1a73e8', dark: '#1557b0', light: '#e8f0fe' },
-          gred: '#d93025',
-          ggreen: '#188038',
-          gyellow: '#f9ab00',
-          surface: '#ffffff',
-          bg: '#f1f3f4',
-          onsurface: '#202124',
-          onsurfaceVariant: '#5f6368',
-          outline: '#dadce0'
-        },
-        fontFamily: {
-          sans: ['Roboto', 'Arial', 'sans-serif']
-        }
-      }
-    }
-  }
-</script>
-<style>
-  body { font-family: 'Roboto', Arial, sans-serif; }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>El Payino y el Papi</title>
+        <meta name="theme-color" content="#1a73e8" />
+        <link rel="icon" href="icons/icon-192.png" />
+        <link rel="apple-touch-icon" href="icons/icon-192.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Payino y Papi" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Pirata+One&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+            rel="stylesheet"
+        />
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        colors: {
+                            gblue: {
+                                DEFAULT: "#1a73e8",
+                                dark: "#1557b0",
+                                light: "#e8f0fe",
+                            },
+                            gred: "#d93025",
+                            ggreen: "#188038",
+                            gyellow: "#f9ab00",
+                            surface: "#ffffff",
+                            bg: "#f1f3f4",
+                            onsurface: "#202124",
+                            onsurfaceVariant: "#5f6368",
+                            outline: "#dadce0",
+                        },
+                        fontFamily: {
+                            sans: ["Roboto", "Arial", "sans-serif"],
+                        },
+                    },
+                },
+            };
+        </script>
+        <style>
+            body {
+                font-family: "Roboto", Arial, sans-serif;
+            }
 
-  .material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-    vertical-align: middle;
-    line-height: 1;
-    font-size: 20px;
-  }
+            .material-symbols-outlined {
+                font-variation-settings:
+                    "FILL" 0,
+                    "wght" 400,
+                    "GRAD" 0,
+                    "opsz" 24;
+                vertical-align: middle;
+                line-height: 1;
+                font-size: 20px;
+            }
 
-  .elevation-1 { box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 1px 3px 1px rgba(60,64,67,.15); }
-  .elevation-2 { box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 2px 6px 2px rgba(60,64,67,.15); }
-  .elevation-3 { box-shadow: 0 4px 8px 3px rgba(60,64,67,.15), 0 1px 3px rgba(60,64,67,.30); }
-  .hover-elevation-2:hover { box-shadow: 0 1px 2px 0 rgba(60,64,67,.30), 0 2px 6px 2px rgba(60,64,67,.15); }
+            .elevation-1 {
+                box-shadow:
+                    0 1px 2px 0 rgba(60, 64, 67, 0.3),
+                    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+            }
+            .elevation-2 {
+                box-shadow:
+                    0 1px 2px 0 rgba(60, 64, 67, 0.3),
+                    0 2px 6px 2px rgba(60, 64, 67, 0.15);
+            }
+            .elevation-3 {
+                box-shadow:
+                    0 4px 8px 3px rgba(60, 64, 67, 0.15),
+                    0 1px 3px rgba(60, 64, 67, 0.3);
+            }
+            .hover-elevation-2:hover {
+                box-shadow:
+                    0 1px 2px 0 rgba(60, 64, 67, 0.3),
+                    0 2px 6px 2px rgba(60, 64, 67, 0.15);
+            }
 
-  .face-zoom { transform: scale(1.9); transform-origin: 50% 22%; }
+            .face-zoom {
+                transform: scale(1.9);
+                transform-origin: 50% 22%;
+            }
 
-  .fairy-title {
-    font-family: 'Pirata One', cursive;
-    color: #c81e1e;
-    -webkit-text-stroke: 1.5px #1a1a1a;
-    text-shadow:
-      -1.5px -1.5px 0 #1a1a1a,
-       1.5px -1.5px 0 #1a1a1a,
-      -1.5px  1.5px 0 #1a1a1a,
-       1.5px  1.5px 0 #1a1a1a,
-       3px 4px 0 rgba(26, 26, 26, .25);
-  }
+            .fairy-title {
+                font-family: "Pirata One", cursive;
+                color: #c81e1e;
+                -webkit-text-stroke: 1.5px #1a1a1a;
+                text-shadow:
+                    -1.5px -1.5px 0 #1a1a1a,
+                    1.5px -1.5px 0 #1a1a1a,
+                    -1.5px 1.5px 0 #1a1a1a,
+                    1.5px 1.5px 0 #1a1a1a,
+                    3px 4px 0 rgba(26, 26, 26, 0.25);
+            }
 
-  .chevron { transition: transform .2s cubic-bezier(.4,0,.2,1); }
-  .chevron.open { transform: rotate(180deg); }
+            .chevron {
+                transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            .chevron.open {
+                transform: rotate(180deg);
+            }
 
-  @keyframes dialogIn {
-    from { opacity: 0; transform: scale(.92); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .dialog-in { animation: dialogIn .22s cubic-bezier(.4,0,.2,1) forwards; }
+            @keyframes dialogIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.92);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            .dialog-in {
+                animation: dialogIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            }
 
-  @keyframes imgIn {
-    from { opacity: 0; transform: scale(.6); }
-    to { opacity: 1; transform: scale(1); }
-  }
-  .img-in { animation: imgIn .3s cubic-bezier(.34,1.56,.64,1) forwards; }
+            @keyframes imgIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.6);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+            .img-in {
+                animation: imgIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            }
 
-  @keyframes fadeOutOverlay { to { opacity: 0; } }
-  .fade-out { animation: fadeOutOverlay .18s ease-in forwards; }
+            @keyframes fadeOutOverlay {
+                to {
+                    opacity: 0;
+                }
+            }
+            .fade-out {
+                animation: fadeOutOverlay 0.18s ease-in forwards;
+            }
 
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #dadce0; border-radius: 8px; }
-</style>
-</head>
-<body class="min-h-screen bg-bg text-onsurface">
+            ::-webkit-scrollbar {
+                width: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #dadce0;
+                border-radius: 8px;
+            }
+        </style>
+    </head>
+    <body class="min-h-screen text-onsurface">
+        <div id="tsparticles"></div>
+        <div class="max-w-xl mx-auto px-4 py-10 sm:py-14">
+            <!-- header -->
+            <header class="mb-2">
+                <img
+                    src="assets/logo.png"
+                    alt="El Payino y el Papi"
+                    class="-mb-20 w-auto"
+                    onerror="
+                        this.style.display = 'none';
+                        this.nextElementSibling.style.display = 'flex';
+                    "
+                />
+                <h1 class="fairy-title hidden items-baseline flex-wrap gap-x-2">
+                    <span class="text-lg sm:text-xl">El</span>
+                    <span class="text-4xl sm:text-5xl">Payino</span>
+                    <span class="text-lg sm:text-xl">y el</span>
+                    <span class="text-4xl sm:text-5xl">Papi</span>
+                </h1>
+            </header>
 
-  <div class="max-w-xl mx-auto px-4 py-10 sm:py-14">
+            <!-- switcher: choose who you are via URL -->
+            <section
+                id="switcher"
+                class="bg-surface rounded-2xl elevation-1 p-8 text-center"
+            >
+                <h2 class="text-lg font-medium text-onsurface mb-1">
+                    ¿Quién eres?
+                </h2>
+                <p class="text-onsurfaceVariant text-sm mb-6">
+                    Elige tu usuario para entrar directo, sin preguntas cada vez
+                </p>
+                <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a
+                        href="?user=angel"
+                        class="flex-1 flex items-center gap-3 border border-outline rounded-xl px-4 py-3 hover:bg-bg hover:border-gblue transition"
+                    >
+                        <div
+                            class="w-10 h-10 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0"
+                        >
+                            <img
+                                src="assets/angel.png"
+                                alt="Angel"
+                                class="w-full h-full object-cover face-zoom"
+                                onerror="
+                                    this.style.display = 'none';
+                                    this.nextElementSibling.style.display =
+                                        'flex';
+                                "
+                            />
+                            <span
+                                class="hidden items-center justify-center w-full h-full material-symbols-outlined text-onsurfaceVariant"
+                                >person</span
+                            >
+                        </div>
+                        <span class="font-medium text-onsurface"
+                            >Soy Angel</span
+                        >
+                    </a>
+                    <a
+                        href="?user=nelson"
+                        class="flex-1 flex items-center gap-3 border border-outline rounded-xl px-4 py-3 hover:bg-bg hover:border-gblue transition"
+                    >
+                        <div
+                            class="w-10 h-10 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0"
+                        >
+                            <img
+                                src="assets/nelson.png"
+                                alt="Nelson"
+                                class="w-full h-full object-cover face-zoom"
+                                onerror="
+                                    this.style.display = 'none';
+                                    this.nextElementSibling.style.display =
+                                        'flex';
+                                "
+                            />
+                            <span
+                                class="hidden items-center justify-center w-full h-full material-symbols-outlined text-onsurfaceVariant"
+                                >person</span
+                            >
+                        </div>
+                        <span class="font-medium text-onsurface"
+                            >Soy Nelson</span
+                        >
+                    </a>
+                </div>
+            </section>
 
-    <!-- header -->
-    <header class="mb-2">
-      <h1 class="fairy-title flex items-baseline flex-wrap gap-x-2">
-        <span class="text-lg sm:text-xl">El</span>
-        <span class="text-4xl sm:text-5xl">Payino</span>
-        <span class="text-lg sm:text-xl">y el</span>
-        <span class="text-4xl sm:text-5xl">Papi</span>
-      </h1>
-    </header>
+            <!-- main app: shown once a valid user is chosen via URL -->
+            <div id="app" class="hidden">
+                <!-- hero image of the current user + balance badge, top right -->
+                <div class="mb-6">
+                    <div class="flex justify-end overflow-hidden h-28">
+                        <div id="heroWrap" class="relative">
+                            <button
+                                id="heroBtn"
+                                class="block w-40 h-40 sm:w-48 sm:h-48"
+                            >
+                                <img
+                                    id="heroImg"
+                                    src=""
+                                    alt=""
+                                    class="w-full h-full object-contain"
+                                />
+                                <div
+                                    id="heroFallback"
+                                    class="hidden w-full h-full items-center justify-center material-symbols-outlined text-onsurfaceVariant"
+                                    style="font-size: 96px"
+                                >
+                                    person
+                                </div>
+                            </button>
+                            <div
+                                id="userMenuDropdown"
+                                class="hidden absolute right-0 top-full bg-surface rounded-lg elevation-2 py-1 w-52 z-30 text-left"
+                            >
+                                <a
+                                    href="index.html"
+                                    class="flex items-center gap-3 px-4 py-2.5 text-sm text-onsurface hover:bg-bg transition"
+                                >
+                                    <span
+                                        class="material-symbols-outlined text-onsurfaceVariant"
+                                        style="font-size: 20px"
+                                        >swap_horiz</span
+                                    >
+                                    Cambiar de usuario
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <div
+                            id="balanceBadge"
+                            class="bg-surface elevation-1 rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3"
+                        >
+                            <span
+                                id="balanceDot"
+                                class="w-2 h-2 rounded-full bg-ggreen shrink-0"
+                            ></span>
+                            <p
+                                id="balanceText"
+                                class="text-sm font-medium text-onsurface whitespace-nowrap"
+                            >
+                                Cargando...
+                            </p>
+                            <button
+                                id="settleBtn"
+                                class="hidden items-center gap-1.5 bg-gblue hover:bg-gblue-dark text-white text-xs font-medium px-3 py-1.5 rounded-full transition"
+                            >
+                                <span
+                                    class="material-symbols-outlined"
+                                    style="font-size: 16px"
+                                    >handshake</span
+                                >
+                                Liquidar deuda
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- switcher: choose who you are via URL -->
-    <section id="switcher" class="bg-surface rounded-2xl elevation-1 p-8 text-center">
-      <h2 class="text-lg font-medium text-onsurface mb-1">¿Quién eres?</h2>
-      <p class="text-onsurfaceVariant text-sm mb-6">Elige tu usuario para entrar directo, sin preguntas cada vez</p>
-      <div class="flex flex-col sm:flex-row gap-3 justify-center">
-        <a href="?user=angel" class="flex-1 flex items-center gap-3 border border-outline rounded-xl px-4 py-3 hover:bg-bg hover:border-gblue transition">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0">
-            <img src="assets/angel.png" alt="Angel" class="w-full h-full object-cover face-zoom" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-            <span class="hidden items-center justify-center w-full h-full material-symbols-outlined text-onsurfaceVariant">person</span>
-          </div>
-          <span class="font-medium text-onsurface">Soy Angel</span>
-        </a>
-        <a href="?user=nelson" class="flex-1 flex items-center gap-3 border border-outline rounded-xl px-4 py-3 hover:bg-bg hover:border-gblue transition">
-          <div class="w-10 h-10 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0">
-            <img src="assets/nelson.png" alt="Nelson" class="w-full h-full object-cover face-zoom" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
-            <span class="hidden items-center justify-center w-full h-full material-symbols-outlined text-onsurfaceVariant">person</span>
-          </div>
-          <span class="font-medium text-onsurface">Soy Nelson</span>
-        </a>
-      </div>
-    </section>
+                <!-- add expense form -->
+                <section class="bg-surface rounded-2xl elevation-1 p-5 mb-4">
+                    <h2
+                        class="flex items-center gap-2 text-base font-medium text-onsurface mb-4"
+                    >
+                        <span class="material-symbols-outlined text-gblue"
+                            >add_circle</span
+                        >
+                        Agregar un gasto
+                    </h2>
+                    <form id="expenseForm" class="space-y-3">
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant"
+                                style="font-size: 20px"
+                                >receipt_long</span
+                            >
+                            <input
+                                id="description"
+                                type="text"
+                                placeholder="¿En qué gastaste?"
+                                maxlength="80"
+                                required
+                                class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                            />
+                        </div>
+                        <div class="relative">
+                            <span
+                                class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant"
+                                style="font-size: 20px"
+                                >euro</span
+                            >
+                            <input
+                                id="amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                placeholder="Monto"
+                                required
+                                class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                            />
+                        </div>
+                        <button
+                            id="submitBtn"
+                            type="submit"
+                            class="w-full flex items-center justify-center gap-2 bg-gblue hover:bg-gblue-dark text-white font-medium text-sm py-2.5 rounded-lg elevation-1 hover-elevation-2 transition"
+                        >
+                            <span
+                                class="material-symbols-outlined"
+                                style="font-size: 20px"
+                                >payments</span
+                            >
+                            <span id="submitBtnText">Agregar gasto</span>
+                        </button>
+                    </form>
+                </section>
 
-    <!-- main app: shown once a valid user is chosen via URL -->
-    <div id="app" class="hidden">
-
-      <!-- hero image of the current user + balance badge, top right -->
-      <div class="mb-6">
-        <div class="flex justify-end">
-          <div id="heroWrap" class="relative">
-            <button id="heroBtn" class="block w-40 h-40 sm:w-48 sm:h-48">
-              <img id="heroImg" src="" alt="" class="w-full h-full object-contain">
-              <div id="heroFallback" class="hidden w-full h-full items-center justify-center material-symbols-outlined text-onsurfaceVariant" style="font-size:96px">person</div>
-            </button>
-            <div id="userMenuDropdown" class="hidden absolute right-0 top-full bg-surface rounded-lg elevation-2 py-1 w-52 z-30 text-left">
-              <a href="index.html" class="flex items-center gap-3 px-4 py-2.5 text-sm text-onsurface hover:bg-bg transition">
-                <span class="material-symbols-outlined text-onsurfaceVariant" style="font-size:20px">swap_horiz</span>
-                Cambiar de usuario
-              </a>
+                <!-- history: small unobtrusive link, keeps dropdown behavior -->
+                <div class="px-1">
+                    <button
+                        id="historyToggle"
+                        class="inline-flex items-center gap-1.5 text-sm font-medium text-gblue hover:bg-gblue-light rounded-md px-2 py-1 -ml-2 transition"
+                    >
+                        <span
+                            class="material-symbols-outlined"
+                            style="font-size: 18px"
+                            >history</span
+                        >
+                        Historial
+                        <span
+                            id="historyChevron"
+                            class="material-symbols-outlined chevron"
+                            style="font-size: 18px"
+                            >expand_more</span
+                        >
+                    </button>
+                    <ul
+                        id="historyList"
+                        class="hidden mt-3 divide-y divide-outline/60 bg-surface rounded-lg elevation-1 max-h-96 overflow-y-auto"
+                    ></ul>
+                    <p
+                        id="emptyState"
+                        class="hidden text-center text-onsurfaceVariant text-sm py-6"
+                    >
+                        Aún no hay gastos registrados. ¡Agrega el primero!
+                    </p>
+                </div>
             </div>
-          </div>
         </div>
-        <div class="flex justify-end -mt-4">
-          <div id="balanceBadge" class="bg-surface elevation-1 rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3">
-            <span id="balanceDot" class="w-2 h-2 rounded-full bg-ggreen shrink-0"></span>
-            <p id="balanceText" class="text-sm font-medium text-onsurface whitespace-nowrap">Cargando...</p>
-            <button id="settleBtn" class="hidden items-center gap-1.5 bg-gblue hover:bg-gblue-dark text-white text-xs font-medium px-3 py-1.5 rounded-full transition">
-              <span class="material-symbols-outlined" style="font-size:16px">handshake</span>
-              Liquidar deuda
-            </button>
-          </div>
+
+        <!-- payment animation: material dialog with the payer's image -->
+        <div
+            id="overlay"
+            class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(32,33,36,.6)]"
+            onclick="hideOverlay()"
+        >
+            <div
+                id="overlayCard"
+                class="dialog-in bg-surface rounded-2xl elevation-3 p-8 text-center max-w-xs mx-4"
+            >
+                <div
+                    id="overlayAvatarWrap"
+                    class="img-in w-32 h-32 mx-auto flex items-center justify-center"
+                >
+                    <img
+                        id="overlayImg"
+                        src=""
+                        alt=""
+                        class="w-full h-full object-contain"
+                    />
+                    <div
+                        id="overlayFallback"
+                        class="w-full h-full hidden items-center justify-center material-symbols-outlined text-onsurfaceVariant"
+                        style="font-size: 64px"
+                    >
+                        person
+                    </div>
+                </div>
+                <h3
+                    id="overlayTitle"
+                    class="text-base font-medium text-onsurface mt-4"
+                ></h3>
+                <p
+                    id="overlaySubtitle"
+                    class="text-sm text-onsurfaceVariant mt-1"
+                ></p>
+            </div>
         </div>
-      </div>
 
-      <!-- add expense form -->
-      <section class="bg-surface rounded-2xl elevation-1 p-5 mb-4">
-        <h2 class="flex items-center gap-2 text-base font-medium text-onsurface mb-4">
-          <span class="material-symbols-outlined text-gblue">add_circle</span>
-          Agregar un gasto
-        </h2>
-        <form id="expenseForm" class="space-y-3">
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant" style="font-size:20px">receipt_long</span>
-            <input id="description" type="text" placeholder="¿En qué gastaste?" maxlength="80" required
-                   class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light">
-          </div>
-          <div class="relative">
-            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant" style="font-size:20px">euro</span>
-            <input id="amount" type="number" step="0.01" min="0.01" placeholder="Monto" required
-                   class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light">
-          </div>
-          <button id="submitBtn" type="submit" class="w-full flex items-center justify-center gap-2 bg-gblue hover:bg-gblue-dark text-white font-medium text-sm py-2.5 rounded-lg elevation-1 hover-elevation-2 transition">
-            <span class="material-symbols-outlined" style="font-size:20px">payments</span>
-            <span id="submitBtnText">Agregar gasto</span>
-          </button>
-        </form>
-      </section>
+        <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2/tsparticles.confetti.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script>
+            tsParticles.load({
+                id: "tsparticles",
+                options: {
+                    fullScreen: { enable: true, zIndex: -1 },
+                    fpsLimit: 60,
+                    background: { color: { value: "#f1f3f4" } },
+                    particles: {
+                        number: { value: 20, density: { enable: true, area: 800 } },
+                        shape: {
+                            type: "text",
+                            options: {
+                                text: { value: ["💶", "💵"], font: "Arial", weight: "400" },
+                            },
+                        },
+                        size: { value: { min: 16, max: 30 } },
+                        opacity: { value: { min: 0.3, max: 0.65 } },
+                        rotate: {
+                            value: { min: 0, max: 360 },
+                            direction: "random",
+                            animation: { enable: true, speed: 6 },
+                        },
+                        wobble: { enable: true, distance: 8, speed: 6 },
+                        move: {
+                            enable: true,
+                            direction: "bottom",
+                            speed: { min: 1, max: 2.2 },
+                            straight: false,
+                            outModes: { default: "out" },
+                        },
+                    },
+                    interactivity: {
+                        events: { onHover: { enable: false }, onClick: { enable: false } },
+                    },
+                    detectRetina: true,
+                },
+            });
 
-      <!-- history: small unobtrusive link, keeps dropdown behavior -->
-      <div class="px-1">
-        <button id="historyToggle" class="inline-flex items-center gap-1.5 text-sm font-medium text-gblue hover:bg-gblue-light rounded-md px-2 py-1 -ml-2 transition">
-          <span class="material-symbols-outlined" style="font-size:18px">history</span>
-          Historial
-          <span id="historyChevron" class="material-symbols-outlined chevron" style="font-size:18px">expand_more</span>
-        </button>
-        <ul id="historyList" class="hidden mt-3 divide-y divide-outline/60 bg-surface rounded-lg elevation-1 max-h-96 overflow-y-auto"></ul>
-        <p id="emptyState" class="hidden text-center text-onsurfaceVariant text-sm py-6">Aún no hay gastos registrados. ¡Agrega el primero!</p>
-      </div>
-    </div>
-  </div>
+            const SUPABASE_URL = "https://fjhwnypedexgnbkthrtt.supabase.co";
+            const SUPABASE_ANON_KEY =
+                "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqaHdueXBlZGV4Z25ia3RocnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDUxMDAsImV4cCI6MjA5ODU4MTEwMH0.LBwYCefYXmfynB9SR2nUlJLdaJ4WcmWDmftluzSaQng";
+            const supabaseClient = window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_ANON_KEY,
+            );
 
-  <!-- payment animation: material dialog with the payer's image -->
-  <div id="overlay" class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(32,33,36,.6)]" onclick="hideOverlay()">
-    <div id="overlayCard" class="dialog-in bg-surface rounded-2xl elevation-3 p-8 text-center max-w-xs mx-4">
-      <div id="overlayAvatarWrap" class="img-in w-32 h-32 mx-auto flex items-center justify-center">
-        <img id="overlayImg" src="" alt="" class="w-full h-full object-contain">
-        <div id="overlayFallback" class="w-full h-full hidden items-center justify-center material-symbols-outlined text-onsurfaceVariant" style="font-size:64px">person</div>
-      </div>
-      <h3 id="overlayTitle" class="text-base font-medium text-onsurface mt-4"></h3>
-      <p id="overlaySubtitle" class="text-sm text-onsurfaceVariant mt-1"></p>
-    </div>
-  </div>
+            const STORAGE_KEY = "elPayinoYElPapi_records";
+            const MIGRATION_FLAG = "elPayinoYElPapi_migrated";
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  const SUPABASE_URL = 'https://fjhwnypedexgnbkthrtt.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZqaHdueXBlZGV4Z25ia3RocnR0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMwMDUxMDAsImV4cCI6MjA5ODU4MTEwMH0.LBwYCefYXmfynB9SR2nUlJLdaJ4WcmWDmftluzSaQng';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const USERS = {
+                Angel: {
+                    name: "Angel",
+                    img: "assets/angel.png",
+                    title: "Angel pagó",
+                },
+                Nelson: {
+                    name: "Nelson",
+                    img: "assets/nelson.png",
+                    title: "Nelson pagó",
+                },
+            };
 
-  const STORAGE_KEY = 'elPayinoYElPapi_records';
-  const MIGRATION_FLAG = 'elPayinoYElPapi_migrated';
+            function setAvatarImage(imgEl, fallbackEl, who) {
+                imgEl.style.display = "";
+                fallbackEl.style.display = "none";
+                imgEl.src = USERS[who].img;
+                imgEl.onerror = () => {
+                    imgEl.style.display = "none";
+                    fallbackEl.style.display = "flex";
+                };
+            }
 
-  const USERS = {
-    Angel:  { name: 'Angel',  img: 'assets/angel.png',  title: 'Angel pagó' },
-    Nelson: { name: 'Nelson', img: 'assets/nelson.png', title: 'Nelson pagó' }
-  };
+            // resolve current user strictly from the URL, e.g. index.html?user=angel
+            const urlParams = new URLSearchParams(location.search);
+            let rawUser = (urlParams.get("user") || "").toLowerCase();
+            let currentUser =
+                rawUser === "angel"
+                    ? "Angel"
+                    : rawUser === "nelson"
+                      ? "Nelson"
+                      : null;
 
-  function setAvatarImage(imgEl, fallbackEl, who) {
-    imgEl.style.display = '';
-    fallbackEl.style.display = 'none';
-    imgEl.src = USERS[who].img;
-    imgEl.onerror = () => {
-      imgEl.style.display = 'none';
-      fallbackEl.style.display = 'flex';
-    };
-  }
+            let records = [];
 
-  // resolve current user strictly from the URL, e.g. index.html?user=angel
-  const urlParams = new URLSearchParams(location.search);
-  let rawUser = (urlParams.get('user') || '').toLowerCase();
-  let currentUser = rawUser === 'angel' ? 'Angel' : rawUser === 'nelson' ? 'Nelson' : null;
+            function rowToRecord(row) {
+                return {
+                    id: row.id,
+                    type: row.type,
+                    description: row.description,
+                    amount: Number(row.amount),
+                    paidBy: row.paid_by,
+                    contribution: Number(row.contribution),
+                    date: row.created_at,
+                };
+            }
 
-  let records = [];
+            // one-time upload of whatever was previously saved in this browser's localStorage
+            async function migrateLocalStorageIfNeeded() {
+                if (localStorage.getItem(MIGRATION_FLAG)) return;
+                const legacy = JSON.parse(
+                    localStorage.getItem(STORAGE_KEY) || "[]",
+                );
+                if (legacy.length > 0) {
+                    const rows = legacy.map((r) => ({
+                        type: r.type,
+                        description: r.description,
+                        amount: r.amount,
+                        paid_by: r.paidBy,
+                        contribution: r.contribution,
+                        created_at: r.date,
+                    }));
+                    const { error } = await supabaseClient
+                        .from("records")
+                        .insert(rows);
+                    if (error) console.error("migration failed", error);
+                }
+                localStorage.setItem(MIGRATION_FLAG, "1");
+            }
 
-  function rowToRecord(row) {
-    return {
-      id: row.id,
-      type: row.type,
-      description: row.description,
-      amount: Number(row.amount),
-      paidBy: row.paid_by,
-      contribution: Number(row.contribution),
-      date: row.created_at
-    };
-  }
+            async function loadRecords() {
+                const { data, error } = await supabaseClient
+                    .from("records")
+                    .select("*")
+                    .order("created_at", { ascending: true });
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                records = data.map(rowToRecord);
+            }
 
-  // one-time upload of whatever was previously saved in this browser's localStorage
-  async function migrateLocalStorageIfNeeded() {
-    if (localStorage.getItem(MIGRATION_FLAG)) return;
-    const legacy = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    if (legacy.length > 0) {
-      const rows = legacy.map(r => ({
-        type: r.type,
-        description: r.description,
-        amount: r.amount,
-        paid_by: r.paidBy,
-        contribution: r.contribution,
-        created_at: r.date
-      }));
-      const { error } = await supabaseClient.from('records').insert(rows);
-      if (error) console.error('migration failed', error);
-    }
-    localStorage.setItem(MIGRATION_FLAG, '1');
-  }
+            function fmt(n) {
+                return n.toLocaleString("es-ES", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                });
+            }
 
-  async function loadRecords() {
-    const { data, error } = await supabaseClient
-      .from('records')
-      .select('*')
-      .order('created_at', { ascending: true });
-    if (error) { console.error(error); return; }
-    records = data.map(rowToRecord);
-  }
+            function computeBalance() {
+                return records.reduce((sum, r) => sum + r.contribution, 0);
+            }
 
-  function fmt(n) {
-    return n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
+            function render() {
+                const balance = computeBalance();
+                const balanceText = document.getElementById("balanceText");
+                const balanceDot = document.getElementById("balanceDot");
+                const settleBtn = document.getElementById("settleBtn");
 
-  function computeBalance() {
-    return records.reduce((sum, r) => sum + r.contribution, 0);
-  }
+                if (Math.abs(balance) < 0.005) {
+                    balanceText.textContent = "Están en paz";
+                    balanceDot.className =
+                        "w-2 h-2 rounded-full bg-ggreen shrink-0";
+                    settleBtn.classList.add("hidden");
+                    settleBtn.classList.remove("flex");
+                } else if (balance > 0) {
+                    balanceText.textContent = `Nelson le debe ${fmt(balance)} € a Angel`;
+                    balanceDot.className =
+                        "w-2 h-2 rounded-full bg-gyellow shrink-0";
+                    settleBtn.classList.remove("hidden");
+                    settleBtn.classList.add("flex");
+                } else {
+                    balanceText.textContent = `Angel le debe ${fmt(-balance)} € a Nelson`;
+                    balanceDot.className =
+                        "w-2 h-2 rounded-full bg-gyellow shrink-0";
+                    settleBtn.classList.remove("hidden");
+                    settleBtn.classList.add("flex");
+                }
 
-  function render() {
-    const balance = computeBalance();
-    const balanceText = document.getElementById('balanceText');
-    const balanceDot = document.getElementById('balanceDot');
-    const settleBtn = document.getElementById('settleBtn');
+                const list = document.getElementById("historyList");
+                const emptyState = document.getElementById("emptyState");
+                const historyExpanded = !list.classList.contains("hidden");
+                list.innerHTML = "";
 
-    if (Math.abs(balance) < 0.005) {
-      balanceText.textContent = 'Están en paz';
-      balanceDot.className = 'w-2 h-2 rounded-full bg-ggreen shrink-0';
-      settleBtn.classList.add('hidden');
-      settleBtn.classList.remove('flex');
-    } else if (balance > 0) {
-      balanceText.textContent = `Nelson le debe ${fmt(balance)} € a Angel`;
-      balanceDot.className = 'w-2 h-2 rounded-full bg-gyellow shrink-0';
-      settleBtn.classList.remove('hidden');
-      settleBtn.classList.add('flex');
-    } else {
-      balanceText.textContent = `Angel le debe ${fmt(-balance)} € a Nelson`;
-      balanceDot.className = 'w-2 h-2 rounded-full bg-gyellow shrink-0';
-      settleBtn.classList.remove('hidden');
-      settleBtn.classList.add('flex');
-    }
+                if (records.length === 0) {
+                    if (historyExpanded) emptyState.classList.remove("hidden");
+                } else {
+                    emptyState.classList.add("hidden");
+                    [...records].reverse().forEach((r) => {
+                        const li = document.createElement("li");
+                        li.className =
+                            "flex items-center gap-3 px-4 py-3 hover:bg-bg transition";
+                        const dateStr = new Date(r.date).toLocaleDateString(
+                            "es-ES",
+                            { day: "2-digit", month: "short", year: "numeric" },
+                        );
 
-    const list = document.getElementById('historyList');
-    const emptyState = document.getElementById('emptyState');
-    const historyExpanded = !list.classList.contains('hidden');
-    list.innerHTML = '';
-
-    if (records.length === 0) {
-      if (historyExpanded) emptyState.classList.remove('hidden');
-    } else {
-      emptyState.classList.add('hidden');
-      [...records].reverse().forEach(r => {
-        const li = document.createElement('li');
-        li.className = 'flex items-center gap-3 px-4 py-3 hover:bg-bg transition';
-        const dateStr = new Date(r.date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
-
-        if (r.type === 'settlement') {
-          li.innerHTML = `
+                        if (r.type === "settlement") {
+                            li.innerHTML = `
             <div class="w-8 h-8 rounded-full bg-ggreen/10 flex items-center justify-center shrink-0">
               <span class="material-symbols-outlined text-ggreen" style="font-size:18px">handshake</span>
             </div>
@@ -331,8 +642,8 @@
             </div>
             <span class="text-sm font-medium text-ggreen shrink-0">${fmt(r.amount)} €</span>
             <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="deleteRecord('${r.id}')">delete</button>`;
-        } else {
-          li.innerHTML = `
+                        } else {
+                            li.innerHTML = `
             <div class="w-8 h-8 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0">
               <img src="${USERS[r.paidBy].img}" alt="${r.paidBy}" class="w-full h-full object-cover face-zoom" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
               <span class="hidden items-center justify-center w-full h-full material-symbols-outlined text-onsurfaceVariant" style="font-size:16px">person</span>
@@ -343,159 +654,244 @@
             </div>
             <span class="text-sm font-medium text-onsurface shrink-0">${fmt(r.amount)} €</span>
             <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="deleteRecord('${r.id}')">delete</button>`;
-        }
-        list.appendChild(li);
-      });
-    }
-  }
+                        }
+                        list.appendChild(li);
+                    });
+                }
+            }
 
-  async function deleteRecord(id) {
-    const { error } = await supabaseClient.from('records').delete().eq('id', id);
-    if (error) { console.error(error); return; }
-    await loadRecords();
-    render();
-  }
+            async function deleteRecord(id) {
+                const { error } = await supabaseClient
+                    .from("records")
+                    .delete()
+                    .eq("id", id);
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+                await loadRecords();
+                render();
+            }
 
-  async function initApp() {
-    document.getElementById('switcher').classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
+            async function initApp() {
+                document.getElementById("switcher").classList.add("hidden");
+                document.getElementById("app").classList.remove("hidden");
 
-    setAvatarImage(document.getElementById('heroImg'), document.getElementById('heroFallback'), currentUser);
-    document.getElementById('submitBtnText').textContent = `Agregar gasto de ${currentUser}`;
+                setAvatarImage(
+                    document.getElementById("heroImg"),
+                    document.getElementById("heroFallback"),
+                    currentUser,
+                );
+                document.getElementById("submitBtnText").textContent =
+                    `Agregar gasto de ${currentUser}`;
 
-    document.getElementById('heroBtn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      document.getElementById('userMenuDropdown').classList.toggle('hidden');
-    });
-    document.addEventListener('click', (e) => {
-      if (!document.getElementById('heroWrap').contains(e.target)) {
-        document.getElementById('userMenuDropdown').classList.add('hidden');
-      }
-    });
+                document
+                    .getElementById("heroBtn")
+                    .addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        document
+                            .getElementById("userMenuDropdown")
+                            .classList.toggle("hidden");
+                    });
+                document.addEventListener("click", (e) => {
+                    if (
+                        !document.getElementById("heroWrap").contains(e.target)
+                    ) {
+                        document
+                            .getElementById("userMenuDropdown")
+                            .classList.add("hidden");
+                    }
+                });
 
-    document.getElementById('historyToggle').addEventListener('click', () => {
-      const list = document.getElementById('historyList');
-      const chevron = document.getElementById('historyChevron');
-      const emptyState = document.getElementById('emptyState');
-      const willOpen = list.classList.contains('hidden');
-      list.classList.toggle('hidden');
-      chevron.classList.toggle('open');
-      if (willOpen && records.length === 0) emptyState.classList.remove('hidden');
-      else emptyState.classList.add('hidden');
-    });
+                document
+                    .getElementById("historyToggle")
+                    .addEventListener("click", () => {
+                        const list = document.getElementById("historyList");
+                        const chevron =
+                            document.getElementById("historyChevron");
+                        const emptyState =
+                            document.getElementById("emptyState");
+                        const willOpen = list.classList.contains("hidden");
+                        list.classList.toggle("hidden");
+                        chevron.classList.toggle("open");
+                        if (willOpen && records.length === 0)
+                            emptyState.classList.remove("hidden");
+                        else emptyState.classList.add("hidden");
+                    });
 
-    document.getElementById('expenseForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const description = document.getElementById('description').value.trim();
-      const amount = parseFloat(document.getElementById('amount').value);
+                document
+                    .getElementById("expenseForm")
+                    .addEventListener("submit", async (e) => {
+                        e.preventDefault();
+                        const description = document
+                            .getElementById("description")
+                            .value.trim();
+                        const amount = parseFloat(
+                            document.getElementById("amount").value,
+                        );
 
-      if (!description || !amount || amount <= 0) return;
+                        if (!description || !amount || amount <= 0) return;
 
-      // the person who paid is owed the full amount by the other person (no 50/50 split)
-      const contribution = currentUser === 'Angel' ? amount : -amount;
+                        // the person who paid is owed the full amount by the other person (no 50/50 split)
+                        const contribution =
+                            currentUser === "Angel" ? amount : -amount;
 
-      const { error } = await supabaseClient.from('records').insert({
-        type: 'expense',
-        description,
-        amount,
-        paid_by: currentUser,
-        contribution
-      });
-      if (error) { console.error(error); return; }
+                        const { error } = await supabaseClient
+                            .from("records")
+                            .insert({
+                                type: "expense",
+                                description,
+                                amount,
+                                paid_by: currentUser,
+                                contribution,
+                            });
+                        if (error) {
+                            console.error(error);
+                            return;
+                        }
 
-      await loadRecords();
-      render();
-      showPaymentAnimation(currentUser, amount, description);
+                        await loadRecords();
+                        render();
+                        showPaymentAnimation(currentUser, amount, description);
+                        confetti({
+                            count: 120,
+                            spread: 80,
+                            position: { x: 50, y: 60 },
+                            colors: ["#1a73e8", "#d93025", "#f9ab00", "#188038"],
+                            scalar: 1.1,
+                        });
 
-      e.target.reset();
-      document.getElementById('description').focus();
-    });
+                        e.target.reset();
+                        document.getElementById("description").focus();
+                    });
 
-    document.getElementById('settleBtn').addEventListener('click', async () => {
-      const balance = computeBalance();
-      if (Math.abs(balance) < 0.005) return;
+                document
+                    .getElementById("settleBtn")
+                    .addEventListener("click", async () => {
+                        const balance = computeBalance();
+                        if (Math.abs(balance) < 0.005) return;
 
-      const debtor = balance > 0 ? 'Nelson' : 'Angel';
-      const creditor = debtor === 'Nelson' ? 'Angel' : 'Nelson';
-      const amount = Math.abs(balance);
+                        const debtor = balance > 0 ? "Nelson" : "Angel";
+                        const creditor =
+                            debtor === "Nelson" ? "Angel" : "Nelson";
+                        const amount = Math.abs(balance);
 
-      const { error } = await supabaseClient.from('records').insert({
-        type: 'settlement',
-        description: `Liquidación: ${debtor} le pagó a ${creditor}`,
-        amount,
-        paid_by: debtor,
-        contribution: -balance
-      });
-      if (error) { console.error(error); return; }
+                        const { error } = await supabaseClient
+                            .from("records")
+                            .insert({
+                                type: "settlement",
+                                description: `Liquidación: ${debtor} le pagó a ${creditor}`,
+                                amount,
+                                paid_by: debtor,
+                                contribution: -balance,
+                            });
+                        if (error) {
+                            console.error(error);
+                            return;
+                        }
 
-      await loadRecords();
-      render();
-      showPaymentAnimation(debtor, amount, 'Liquidación de la deuda');
-    });
+                        await loadRecords();
+                        render();
+                        showPaymentAnimation(
+                            debtor,
+                            amount,
+                            "Liquidación de la deuda",
+                        );
+                    });
 
-    await migrateLocalStorageIfNeeded();
-    await loadRecords();
-    render();
+                await migrateLocalStorageIfNeeded();
+                await loadRecords();
+                render();
 
-    supabaseClient
-      .channel('records-changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, async () => {
-        await loadRecords();
-        render();
-      })
-      .subscribe();
-  }
+                supabaseClient
+                    .channel("records-changes")
+                    .on(
+                        "postgres_changes",
+                        { event: "*", schema: "public", table: "records" },
+                        async () => {
+                            await loadRecords();
+                            render();
+                        },
+                    )
+                    .subscribe();
+            }
 
-  let hideTimeout = null;
+            let hideTimeout = null;
 
-  function showPaymentAnimation(who, amount, description) {
-    const user = USERS[who];
-    const overlay = document.getElementById('overlay');
-    const overlayCard = document.getElementById('overlayCard');
-    const overlayAvatarWrap = document.getElementById('overlayAvatarWrap');
-    const overlayImg = document.getElementById('overlayImg');
-    const overlayFallback = document.getElementById('overlayFallback');
-    const overlayTitle = document.getElementById('overlayTitle');
-    const overlaySubtitle = document.getElementById('overlaySubtitle');
+            function showPaymentAnimation(who, amount, description) {
+                const user = USERS[who];
+                const overlay = document.getElementById("overlay");
+                const overlayCard = document.getElementById("overlayCard");
+                const overlayAvatarWrap =
+                    document.getElementById("overlayAvatarWrap");
+                const overlayImg = document.getElementById("overlayImg");
+                const overlayFallback =
+                    document.getElementById("overlayFallback");
+                const overlayTitle = document.getElementById("overlayTitle");
+                const overlaySubtitle =
+                    document.getElementById("overlaySubtitle");
 
-    setAvatarImage(overlayImg, overlayFallback, who);
+                setAvatarImage(overlayImg, overlayFallback, who);
 
-    overlayAvatarWrap.classList.remove('img-in');
-    void overlayAvatarWrap.offsetWidth;
-    overlayAvatarWrap.classList.add('img-in');
+                overlayAvatarWrap.classList.remove("img-in");
+                void overlayAvatarWrap.offsetWidth;
+                overlayAvatarWrap.classList.add("img-in");
 
-    overlayCard.classList.remove('dialog-in');
-    void overlayCard.offsetWidth;
-    overlayCard.classList.add('dialog-in');
+                overlayCard.classList.remove("dialog-in");
+                void overlayCard.offsetWidth;
+                overlayCard.classList.add("dialog-in");
 
-    overlayTitle.textContent = `${user.title} ${fmt(amount)} €`;
-    overlaySubtitle.textContent = description;
+                overlayTitle.textContent = `${user.title} ${fmt(amount)} €`;
+                overlaySubtitle.textContent = description;
 
-    overlay.classList.remove('hidden', 'fade-out');
-    overlay.classList.add('flex');
+                overlay.classList.remove("hidden", "fade-out");
+                overlay.classList.add("flex");
 
-    if (hideTimeout) clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(hideOverlay, 2000);
-  }
+                if (hideTimeout) clearTimeout(hideTimeout);
+                hideTimeout = setTimeout(hideOverlay, 2000);
+            }
 
-  function hideOverlay() {
-    const overlay = document.getElementById('overlay');
-    overlay.classList.add('fade-out');
-    setTimeout(() => {
-      overlay.classList.add('hidden');
-      overlay.classList.remove('flex', 'fade-out');
-    }, 200);
-  }
+            function hideOverlay() {
+                const overlay = document.getElementById("overlay");
+                overlay.classList.add("fade-out");
+                setTimeout(() => {
+                    overlay.classList.add("hidden");
+                    overlay.classList.remove("flex", "fade-out");
+                }, 200);
+            }
 
-  if (currentUser) {
-    initApp();
-  }
+            if (currentUser) {
+                initApp();
+            }
 
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    });
-  }
-</script>
-</body>
+            // manifest + service worker only work over http(s); both are no-ops (and noisy in
+            // the console) when this file is opened directly via file://
+            if (location.protocol.startsWith("http")) {
+                const manifestLink = document.createElement("link");
+                manifestLink.rel = "manifest";
+                manifestLink.href = "manifest.json";
+                document.head.appendChild(manifestLink);
+
+                if ("serviceWorker" in navigator) {
+                    window.addEventListener("load", () => {
+                        navigator.serviceWorker
+                            .register("sw.js")
+                            .catch(() => {});
+                    });
+                }
+            } else if ("serviceWorker" in navigator) {
+                // clean up any service worker registered by an earlier version of this
+                // file before it was gated to http(s) only, since a stale one intercepting
+                // navigation on a file:// origin is what causes "unique security origin" errors.
+                // getRegistrations() itself throws/rejects on a null (file://) origin in some
+                // browsers, so this whole thing is best-effort and must never surface an error.
+                try {
+                    navigator.serviceWorker
+                        .getRegistrations()
+                        .then((regs) => regs.forEach((reg) => reg.unregister()))
+                        .catch(() => {});
+                } catch {}
+            }
+        </script>
+    </body>
 </html>

@@ -689,12 +689,15 @@
             const STORAGE_KEY = "elPayinoYElPapi_records";
             const MIGRATION_FLAG = "elPayinoYElPapi_migrated";
 
-            // Pega aquí tu API key de Anthropic (console.anthropic.com) para
-            // habilitar el análisis de facturas con foto. Se llama directamente
-            // desde el navegador, así que cualquiera con este archivo puede
-            // leerla y gastar tu saldo: es un riesgo aceptado a propósito por
-            // ser una app personal sin backend, igual que la anon key de Supabase.
-            const ANTHROPIC_API_KEY = "";
+            // En local: pega aquí tu API key de Google AI Studio para probar el
+            // análisis de facturas. En Netlify, este placeholder se reemplaza
+            // automáticamente en el deploy con la variable de entorno
+            // GEMINI_API_KEY (ver netlify.toml) — no la escribas en este archivo
+            // si vas a subir el cambio a git. Se llama directamente desde el
+            // navegador, así que cualquiera con este archivo puede leerla y
+            // gastar tu saldo: es un riesgo aceptado a propósito por ser una
+            // app personal sin backend, igual que la anon key de Supabase.
+            const GEMINI_API_KEY = "__GEMINI_API_KEY__";
             const RECEIPT_SCHEMA = {
                 type: "object",
                 properties: {
@@ -707,13 +710,11 @@
                                 price: { type: "number" },
                             },
                             required: ["name", "price"],
-                            additionalProperties: false,
                         },
                     },
                     total: { type: "number" },
                 },
                 required: ["items", "total"],
-                additionalProperties: false,
             };
 
             const USERS = {
@@ -1182,9 +1183,12 @@
                 e.target.value = "";
                 if (!file) return;
 
-                if (!ANTHROPIC_API_KEY) {
+                if (
+                    !GEMINI_API_KEY ||
+                    GEMINI_API_KEY.startsWith("__GEMINI_API_KEY")
+                ) {
                     alert(
-                        "Falta configurar la API key de Anthropic en el código (ANTHROPIC_API_KEY) para poder analizar facturas.",
+                        "Falta configurar la API key de Google AI Studio (variable de entorno GEMINI_API_KEY en Netlify, o pegada directamente en GEMINI_API_KEY dentro del código para pruebas locales) para poder analizar facturas.",
                     );
                     return;
                 }
@@ -1228,45 +1232,31 @@
 
             async function analyzeReceiptImage(base64Data, mediaType) {
                 const response = await fetch(
-                    "https://api.anthropic.com/v1/messages",
+                    "https://generativelanguage.googleapis.com/v1beta/interactions",
                     {
                         method: "POST",
                         headers: {
                             "content-type": "application/json",
-                            "x-api-key": ANTHROPIC_API_KEY,
-                            "anthropic-version": "2023-06-01",
-                            "anthropic-dangerous-direct-browser-access":
-                                "true",
+                            "x-goog-api-key": GEMINI_API_KEY,
                         },
                         body: JSON.stringify({
-                            model: "claude-sonnet-5",
-                            max_tokens: 1024,
-                            thinking: { type: "disabled" },
-                            output_config: {
-                                format: {
-                                    type: "json_schema",
-                                    schema: RECEIPT_SCHEMA,
-                                },
-                            },
-                            messages: [
+                            model: "gemini-3.5-flash",
+                            input: [
                                 {
-                                    role: "user",
-                                    content: [
-                                        {
-                                            type: "image",
-                                            source: {
-                                                type: "base64",
-                                                media_type: mediaType,
-                                                data: base64Data,
-                                            },
-                                        },
-                                        {
-                                            type: "text",
-                                            text: "Analiza esta foto de un recibo o factura. Extrae cada producto o servicio comprado con su nombre y precio, y el total de la factura. Si un precio individual no es legible, haz tu mejor estimación a partir del contexto. Responde únicamente con los datos solicitados.",
-                                        },
-                                    ],
+                                    type: "text",
+                                    text: "Analiza esta foto de un recibo o factura. Extrae cada producto o servicio comprado con su nombre y precio, y el total de la factura. Si un precio individual no es legible, haz tu mejor estimación a partir del contexto. Responde únicamente con los datos solicitados.",
+                                },
+                                {
+                                    type: "image",
+                                    data: base64Data,
+                                    mime_type: mediaType,
                                 },
                             ],
+                            response_format: {
+                                type: "text",
+                                mime_type: "application/json",
+                                schema: RECEIPT_SCHEMA,
+                            },
                         }),
                     },
                 );
@@ -1279,18 +1269,12 @@
                 }
 
                 const data = await response.json();
-                if (data.stop_reason === "refusal") {
+                if (!data.output_text) {
                     throw new Error(
-                        "Claude no pudo procesar esta imagen (rechazada por seguridad).",
+                        "Gemini no devolvió texto (puede haber rechazado la imagen).",
                     );
                 }
-                const textBlock = data.content.find(
-                    (b) => b.type === "text",
-                );
-                if (!textBlock) {
-                    throw new Error("Respuesta sin contenido de texto.");
-                }
-                return JSON.parse(textBlock.text);
+                return JSON.parse(data.output_text);
             }
 
             function renderReceiptItems(parsed) {

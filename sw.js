@@ -1,4 +1,4 @@
-const CACHE_NAME = 'payino-y-papi-v1';
+const CACHE_NAME = 'payino-y-papi-v2';
 const APP_SHELL = [
   './',
   './index.html',
@@ -31,18 +31,17 @@ self.addEventListener('fetch', (event) => {
   // only handle same-origin GET requests for the app shell; let API calls (e.g. Supabase) go straight to the network
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
 
+  // network-first: always serve the latest deployed version when online,
+  // and only fall back to the cached app shell when there's no connection.
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          if (response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() => cached);
-      return cached || network;
-    })
+    fetch(event.request)
+      .then((response) => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

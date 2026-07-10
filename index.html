@@ -601,34 +601,6 @@
                     id="receiptItemsList"
                     class="divide-y divide-outline/60 mb-3"
                 ></ul>
-                <div id="receiptManualSection" class="hidden mb-3">
-                    <p class="text-xs text-onsurfaceVariant mb-2">
-                        ¿Falta un item o salió mal? Agrégalo aquí:
-                    </p>
-                    <div class="flex gap-2">
-                        <input
-                            type="text"
-                            id="receiptManualName"
-                            placeholder="Nombre"
-                            class="flex-1 min-w-0 rounded-lg border border-outline px-3 py-2 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
-                        />
-                        <input
-                            type="number"
-                            id="receiptManualPrice"
-                            step="0.01"
-                            min="0"
-                            placeholder="Precio"
-                            class="w-20 rounded-lg border border-outline px-2 py-2 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
-                        />
-                        <button
-                            type="button"
-                            id="receiptManualAddBtn"
-                            class="rounded-lg bg-gblue hover:bg-gblue-dark text-white px-3 text-sm font-medium transition"
-                        >
-                            Agregar
-                        </button>
-                    </div>
-                </div>
                 <div
                     id="receiptTotals"
                     class="hidden border-t border-outline pt-3 space-y-1 mb-4"
@@ -1145,17 +1117,6 @@
                 document
                     .getElementById("receiptClearBtn")
                     .addEventListener("click", clearReceiptOverride);
-                document
-                    .getElementById("receiptManualAddBtn")
-                    .addEventListener("click", addManualReceiptItem);
-                document
-                    .getElementById("receiptManualPrice")
-                    .addEventListener("keydown", (e) => {
-                        if (e.key === "Enter") {
-                            e.preventDefault();
-                            addManualReceiptItem();
-                        }
-                    });
 
                 await migrateLocalStorageIfNeeded();
                 await loadRecords();
@@ -1186,42 +1147,8 @@
                 document
                     .getElementById("receiptConfirmBtn")
                     .classList.add("hidden");
-                document
-                    .getElementById("receiptManualSection")
-                    .classList.add("hidden");
-                document.getElementById("receiptManualName").value = "";
-                document.getElementById("receiptManualPrice").value = "";
                 receiptAnalyzedItems = [];
                 receiptAnalyzedTotal = 0;
-            }
-
-            function addManualReceiptItem() {
-                const nameInput = document.getElementById(
-                    "receiptManualName",
-                );
-                const priceInput = document.getElementById(
-                    "receiptManualPrice",
-                );
-                const name = nameInput.value.trim();
-                const price = parseFloat(priceInput.value);
-                if (!name || !price || price <= 0) return;
-
-                receiptAnalyzedItems.push({ name, price });
-                receiptAnalyzedTotal = receiptAnalyzedItems.reduce(
-                    (sum, item) => sum + item.price,
-                    0,
-                );
-                renderReceiptItems(receiptAnalyzedItems, receiptAnalyzedTotal);
-                document
-                    .getElementById("receiptTotals")
-                    .classList.remove("hidden");
-                document
-                    .getElementById("receiptConfirmBtn")
-                    .classList.remove("hidden");
-
-                nameInput.value = "";
-                priceInput.value = "";
-                nameInput.focus();
             }
 
             function removeReceiptItem(index) {
@@ -1256,7 +1183,8 @@
 
                 try {
                     const worker = await getOcrWorker();
-                    const result = await worker.recognize(file);
+                    const preprocessed = await preprocessReceiptImage(file);
+                    const result = await worker.recognize(preprocessed);
                     const parsed = parseReceiptText(result.data.text);
 
                     receiptAnalyzedItems = parsed.items;
@@ -1268,7 +1196,7 @@
 
                     if (parsed.items.length > 0) {
                         status.textContent =
-                            "Revisa los items (corrige o agrega si algo salió mal) y marca los que te tocan a ti:";
+                            "Marca los items que te tocan a ti:";
                         document
                             .getElementById("receiptTotals")
                             .classList.remove("hidden");
@@ -1277,16 +1205,12 @@
                             .classList.remove("hidden");
                     } else {
                         status.textContent =
-                            "No se detectaron items automáticamente. Agrégalos a mano:";
+                            "No se detectaron items en la foto. Prueba con más luz y encuadrando solo el recibo.";
                     }
                 } catch (err) {
                     console.error(err);
-                    status.textContent = `No se pudo leer la factura: ${err.message}. Agrega los items a mano:`;
+                    status.textContent = `No se pudo leer la factura: ${err.message}`;
                 }
-
-                document
-                    .getElementById("receiptManualSection")
-                    .classList.remove("hidden");
             }
 
             // Lazily created and reused across scans so the OCR language data
@@ -1294,16 +1218,157 @@
             let ocrWorkerPromise = null;
             function getOcrWorker() {
                 if (!ocrWorkerPromise) {
-                    ocrWorkerPromise = Tesseract.createWorker("spa");
+                    // "best" trained data is much slower to download (~12MB vs ~1MB)
+                    // and slightly slower to run, but meaningfully more accurate on
+                    // degraded print (dot-matrix, worn thermal paper) than the
+                    // "fast" data tesseract.js uses by default — worth it here since
+                    // this only downloads once per session.
+                    ocrWorkerPromise = Tesseract.createWorker("spa", 1, {
+                        langPath: "https://tessdata.projectnaptha.com/4.0.0_best/",
+                    }).then(async (worker) => {
+                        // receipts are rows of text at various sizes, not a single
+                        // paragraph — PSM 6 reads them line-by-line far more reliably
+                        // than Tesseract's default automatic page segmentation.
+                        await worker.setParameters({
+                            tessedit_pageseg_mode: "6",
+                            preserve_interword_spaces: "1",
+                        });
+                        return worker;
+                    });
                 }
                 return ocrWorkerPromise;
             }
 
+            // Flattens uneven lighting/shadows and background texture (tablecloth,
+            // watermark) without fully binarizing the image — Tesseract's LSTM
+            // model handles anti-aliased grayscale text better than a hand-rolled
+            // black/white threshold, which tends to turn background texture into
+            // speckle noise that reads as stray punctuation. Each pixel is divided
+            // by its own local background estimate (a heavily blurred copy of the
+            // image), so a pixel close to its surrounding brightness — background,
+            // textured or not — is pushed toward white, while ink strokes (much
+            // darker than their surroundings) stay dark. Also upscales small
+            // photos, since OCR accuracy drops sharply on low-resolution text.
+            function preprocessReceiptImage(file) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        URL.revokeObjectURL(img.src);
+
+                        let width = img.naturalWidth;
+                        let height = img.naturalHeight;
+                        const longEdge = Math.max(width, height);
+                        const targetLongEdge =
+                            longEdge < 1200 ? 1600 : Math.min(longEdge, 2200);
+                        const scale = targetLongEdge / longEdge;
+                        width = Math.round(width * scale);
+                        height = Math.round(height * scale);
+
+                        const canvas = document.createElement("canvas");
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const imageData = ctx.getImageData(
+                            0,
+                            0,
+                            width,
+                            height,
+                        );
+                        const data = imageData.data;
+                        const gray = new Float32Array(width * height);
+                        const grayCanvas = document.createElement("canvas");
+                        grayCanvas.width = width;
+                        grayCanvas.height = height;
+                        const grayCtx = grayCanvas.getContext("2d");
+                        const grayImageData = grayCtx.createImageData(
+                            width,
+                            height,
+                        );
+                        for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                            const v =
+                                0.299 * data[i] +
+                                0.587 * data[i + 1] +
+                                0.114 * data[i + 2];
+                            gray[p] = v;
+                            grayImageData.data[p * 4] = v;
+                            grayImageData.data[p * 4 + 1] = v;
+                            grayImageData.data[p * 4 + 2] = v;
+                            grayImageData.data[p * 4 + 3] = 255;
+                        }
+                        grayCtx.putImageData(grayImageData, 0, 0);
+
+                        // shrink-then-enlarge the grayscale copy as a cheap blur —
+                        // this approximates each pixel's local background brightness
+                        const blurScale = 32;
+                        const smallW = Math.max(
+                            1,
+                            Math.round(width / blurScale),
+                        );
+                        const smallH = Math.max(
+                            1,
+                            Math.round(height / blurScale),
+                        );
+                        const smallCanvas = document.createElement("canvas");
+                        smallCanvas.width = smallW;
+                        smallCanvas.height = smallH;
+                        smallCanvas
+                            .getContext("2d")
+                            .drawImage(grayCanvas, 0, 0, smallW, smallH);
+
+                        const blurCanvas = document.createElement("canvas");
+                        blurCanvas.width = width;
+                        blurCanvas.height = height;
+                        const blurCtx = blurCanvas.getContext("2d");
+                        blurCtx.imageSmoothingEnabled = true;
+                        blurCtx.drawImage(smallCanvas, 0, 0, width, height);
+                        const blurData = blurCtx.getImageData(
+                            0,
+                            0,
+                            width,
+                            height,
+                        ).data;
+
+                        for (let i = 0, p = 0; i < data.length; i += 4, p++) {
+                            const localBackground = Math.max(
+                                blurData[p * 4],
+                                1,
+                            );
+                            const value = Math.min(
+                                255,
+                                Math.round(
+                                    (gray[p] / localBackground) * 255,
+                                ),
+                            );
+                            data[i] = data[i + 1] = data[i + 2] = value;
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+
+                        canvas.toBlob((blob) => resolve(blob), "image/png");
+                    };
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(file);
+                });
+            }
+
+            // OCR on dot-matrix/thermal receipts routinely confuses visually similar
+            // characters. Only applied to the small trailing token already matched
+            // as a price shape — never to the item name — so it can't corrupt text.
+            function normalizeOcrDigits(token) {
+                return token
+                    .replace(/[Oo]/g, "0")
+                    .replace(/[lI]/g, "1")
+                    .replace(/[Ss]/g, "5")
+                    .replace(/B/g, "8");
+            }
+
             // Heuristic line-based parser: a receipt line is treated as an item
-            // when it ends in a price-looking number. No AI involved — this runs
+            // when it ends in a price-looking token. No AI involved — this runs
             // entirely on-device against the raw OCR text.
             function parseReceiptText(text) {
-                const priceRegex = /(\d{1,4}[.,]\d{2})\s*€?\s*$/;
+                const priceTokenRegex =
+                    /([0-9OolISBs]{1,4}[.,][0-9OolISBs]{2})\s*€?\s*$/;
                 const skipWordsRegex =
                     /\b(iva|cambio|efectivo|tarjeta|subtotal|nif|cif|ticket|factura|fecha|hora|caja|gracias|descuento)\b/i;
 
@@ -1316,26 +1381,36 @@
                 let detectedTotal = null;
 
                 for (const line of lines) {
-                    const match = line.match(priceRegex);
+                    const match = line.match(priceTokenRegex);
                     if (!match) continue;
 
-                    const price = parseFloat(match[1].replace(",", "."));
+                    const normalized = normalizeOcrDigits(
+                        match[1],
+                    ).replace(",", ".");
+                    const price = parseFloat(normalized);
                     if (!price || price <= 0) continue;
 
                     const name = line
                         .slice(0, match.index)
                         .trim()
                         .replace(/[.\-\s]+$/, "");
-                    if (!name) continue;
 
-                    if (
+                    // a bare currency symbol (or nothing) before the number usually
+                    // means this line is the receipt's grand total, not a line item
+                    // — e.g. "€    58,50" printed on its own row.
+                    const looksLikeTotalMarker = /^[€$\-~=_.]{0,3}$/.test(
+                        name,
+                    );
+                    const looksLikeTotalWord =
                         /\btotal\b/i.test(name) &&
-                        !/\bsub\s*total\b/i.test(name)
-                    ) {
+                        !/\bsub\s*total\b/i.test(name);
+
+                    if (looksLikeTotalMarker || looksLikeTotalWord) {
                         detectedTotal = price;
                         continue;
                     }
 
+                    if (!name) continue;
                     if (skipWordsRegex.test(name)) continue;
 
                     items.push({ name, price });

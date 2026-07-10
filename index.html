@@ -1187,6 +1187,11 @@
                     const result = await worker.recognize(preprocessed);
                     const parsed = parseReceiptText(result.data.text);
 
+                    // console-only diagnostics (no UI) — if a photo still fails,
+                    // check devtools for what OCR actually read off the image.
+                    console.log("[receipt OCR] raw text:\n", result.data.text);
+                    console.log("[receipt OCR] parsed:", parsed);
+
                     receiptAnalyzedItems = parsed.items;
                     receiptAnalyzedTotal = parsed.total;
                     renderReceiptItems(
@@ -1249,26 +1254,169 @@
             // textured or not — is pushed toward white, while ink strokes (much
             // darker than their surroundings) stay dark. Also upscales small
             // photos, since OCR accuracy drops sharply on low-resolution text.
+            function otsuThreshold(histogram, total) {
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * histogram[i];
+                let sumB = 0;
+                let weightB = 0;
+                let maxVariance = 0;
+                let threshold = 127;
+                for (let i = 0; i < 256; i++) {
+                    weightB += histogram[i];
+                    if (weightB === 0) continue;
+                    const weightF = total - weightB;
+                    if (weightF === 0) break;
+                    sumB += i * histogram[i];
+                    const meanB = sumB / weightB;
+                    const meanF = (sum - sumB) / weightF;
+                    const variance =
+                        weightB * weightF * (meanB - meanF) * (meanB - meanF);
+                    if (variance > maxVariance) {
+                        maxVariance = variance;
+                        threshold = i;
+                    }
+                }
+                return threshold;
+            }
+
+            // Finds the receipt paper within the photo so surrounding background
+            // (table, placemat) is cropped away before OCR — a wide, textured
+            // border around the actual text confuses Tesseract's page segmentation
+            // far more than a plain background does. Works by classifying pixels
+            // bright/dark (paper is reliably lighter than what's under it) and
+            // finding the bounding box of the rows/columns that are mostly bright.
+            function findReceiptBounds(gray, width, height) {
+                const histogram = new Array(256).fill(0);
+                for (let p = 0; p < gray.length; p++) {
+                    histogram[Math.round(gray[p])]++;
+                }
+                const threshold = otsuThreshold(histogram, gray.length);
+
+                const rowBright = new Array(height).fill(0);
+                const colBright = new Array(width).fill(0);
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        if (gray[y * width + x] > threshold) {
+                            rowBright[y]++;
+                            colBright[x]++;
+                        }
+                    }
+                }
+
+                const rowNeeded = width * 0.35;
+                const colNeeded = height * 0.35;
+
+                let top = 0;
+                while (top < height - 1 && rowBright[top] < rowNeeded) top++;
+                let bottom = height - 1;
+                while (bottom > top && rowBright[bottom] < rowNeeded) bottom--;
+                let left = 0;
+                while (left < width - 1 && colBright[left] < colNeeded) left++;
+                let right = width - 1;
+                while (right > left && colBright[right] < colNeeded) right--;
+
+                // if detection collapsed to a sliver, the paper likely isn't
+                // meaningfully brighter than its background — skip cropping rather
+                // than risk cutting off real content
+                if (
+                    right - left < width * 0.3 ||
+                    bottom - top < height * 0.3
+                ) {
+                    return { left: 0, top: 0, right: width - 1, bottom: height - 1 };
+                }
+
+                const padX = Math.round((right - left) * 0.03);
+                const padY = Math.round((bottom - top) * 0.03);
+                return {
+                    left: Math.max(0, left - padX),
+                    top: Math.max(0, top - padY),
+                    right: Math.min(width - 1, right + padX),
+                    bottom: Math.min(height - 1, bottom + padY),
+                };
+            }
+
             function preprocessReceiptImage(file) {
                 return new Promise((resolve, reject) => {
                     const img = new Image();
                     img.onload = () => {
                         URL.revokeObjectURL(img.src);
 
-                        let width = img.naturalWidth;
-                        let height = img.naturalHeight;
-                        const longEdge = Math.max(width, height);
+                        // pass 1: downscaled render, just to find where the receipt
+                        // paper is within the frame
+                        const probeLongEdge = 700;
+                        const srcLongEdge = Math.max(
+                            img.naturalWidth,
+                            img.naturalHeight,
+                        );
+                        const probeScale = probeLongEdge / srcLongEdge;
+                        const probeW = Math.max(
+                            1,
+                            Math.round(img.naturalWidth * probeScale),
+                        );
+                        const probeH = Math.max(
+                            1,
+                            Math.round(img.naturalHeight * probeScale),
+                        );
+                        const probeCanvas = document.createElement("canvas");
+                        probeCanvas.width = probeW;
+                        probeCanvas.height = probeH;
+                        const probeCtx = probeCanvas.getContext("2d");
+                        probeCtx.drawImage(img, 0, 0, probeW, probeH);
+                        const probeData = probeCtx.getImageData(
+                            0,
+                            0,
+                            probeW,
+                            probeH,
+                        ).data;
+                        const probeGray = new Float32Array(probeW * probeH);
+                        for (
+                            let i = 0, p = 0;
+                            i < probeData.length;
+                            i += 4, p++
+                        ) {
+                            probeGray[p] =
+                                0.299 * probeData[i] +
+                                0.587 * probeData[i + 1] +
+                                0.114 * probeData[i + 2];
+                        }
+                        const bounds = findReceiptBounds(
+                            probeGray,
+                            probeW,
+                            probeH,
+                        );
+                        const srcLeft = Math.round(bounds.left / probeScale);
+                        const srcTop = Math.round(bounds.top / probeScale);
+                        const srcRight = Math.round(bounds.right / probeScale);
+                        const srcBottom = Math.round(
+                            bounds.bottom / probeScale,
+                        );
+                        const srcCropW = srcRight - srcLeft;
+                        const srcCropH = srcBottom - srcTop;
+
+                        // pass 2: render just the cropped receipt region at full
+                        // working resolution
+                        const longEdge = Math.max(srcCropW, srcCropH);
                         const targetLongEdge =
                             longEdge < 1200 ? 1600 : Math.min(longEdge, 2200);
                         const scale = targetLongEdge / longEdge;
-                        width = Math.round(width * scale);
-                        height = Math.round(height * scale);
+                        let width = Math.round(srcCropW * scale);
+                        let height = Math.round(srcCropH * scale);
 
                         const canvas = document.createElement("canvas");
                         canvas.width = width;
                         canvas.height = height;
                         const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0, width, height);
+                        ctx.drawImage(
+                            img,
+                            srcLeft,
+                            srcTop,
+                            srcCropW,
+                            srcCropH,
+                            0,
+                            0,
+                            width,
+                            height,
+                        );
 
                         const imageData = ctx.getImageData(
                             0,

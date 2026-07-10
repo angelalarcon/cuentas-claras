@@ -1515,10 +1515,16 @@
             // when it ends in a price-looking token. No AI involved — this runs
             // entirely on-device against the raw OCR text.
             function parseReceiptText(text) {
+                // NOT anchored to the end of the line: a partially-cropped photo
+                // routinely leaves a sliver of background down one edge, which
+                // Tesseract reads as stray characters trailing every real line —
+                // anchoring to "$" would silently drop almost every item. Instead,
+                // take the LAST price-shaped token on the line and ignore anything
+                // after it.
                 const priceTokenRegex =
-                    /([0-9OolISBs]{1,4}[.,][0-9OolISBs]{2})\s*€?\s*$/;
+                    /([0-9OolISBs]{1,4}[.,][0-9OolISBs]{2})/g;
                 const skipWordsRegex =
-                    /\b(iva|cambio|efectivo|tarjeta|subtotal|nif|cif|ticket|factura|fecha|hora|caja|gracias|descuento)\b/i;
+                    /\b(iva|base|cambio|efectivo|tarjeta|subtotal|nif|cif|ticket|factura|fecha|hora|caja|gracias|descuento)\b/i;
 
                 const lines = text
                     .split("\n")
@@ -1529,8 +1535,9 @@
                 let detectedTotal = null;
 
                 for (const line of lines) {
-                    const match = line.match(priceTokenRegex);
-                    if (!match) continue;
+                    const matches = [...line.matchAll(priceTokenRegex)];
+                    if (matches.length === 0) continue;
+                    const match = matches[matches.length - 1];
 
                     const normalized = normalizeOcrDigits(
                         match[1],

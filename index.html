@@ -1532,7 +1532,6 @@
                     .filter(Boolean);
 
                 const items = [];
-                let detectedTotal = null;
 
                 for (const line of lines) {
                     const matches = [...line.matchAll(priceTokenRegex)];
@@ -1560,10 +1559,9 @@
                         /\btotal\b/i.test(name) &&
                         !/\bsub\s*total\b/i.test(name);
 
-                    if (looksLikeTotalMarker || looksLikeTotalWord) {
-                        detectedTotal = price;
-                        continue;
-                    }
+                    // skip it entirely rather than treat it as a line item — its
+                    // value isn't used; see the note above the return statement.
+                    if (looksLikeTotalMarker || looksLikeTotalWord) continue;
 
                     if (!name) continue;
                     if (skipWordsRegex.test(name)) continue;
@@ -1571,10 +1569,16 @@
                     items.push({ name, price });
                 }
 
+                // The total is always the sum of the items actually shown in the
+                // list, never the receipt's own printed total line — OCR can lose
+                // or misread an item, and a total that doesn't match what's
+                // selectable would let "te toca pagar" exceed "total de la
+                // factura", which makes no sense. detectedTotal is only used to
+                // recognize (and thus exclude) that line so it isn't added as a
+                // bogus item.
                 const sum = items.reduce((s, it) => s + it.price, 0);
-                const total = detectedTotal != null ? detectedTotal : sum;
 
-                return { items, total };
+                return { items, total: sum };
             }
 
             function renderReceiptItems(items, total) {

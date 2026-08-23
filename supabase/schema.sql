@@ -7,8 +7,16 @@ create table if not exists records (
   amount numeric(10, 2) not null check (amount > 0),
   paid_by text not null check (paid_by in ('Angel', 'Nelson')),
   contribution numeric(10, 2) not null,
+  -- how many people the bill was divided between, and how many of those
+  -- parts paid_by covered themselves — null for a non-split expense or one
+  -- entered via the receipt scanner (item selection isn't an even split)
+  split_people integer,
+  split_paid_parts integer,
   created_at timestamptz not null default now()
 );
+
+alter table records add column if not exists split_people integer;
+alter table records add column if not exists split_paid_parts integer;
 
 alter table records enable row level security;
 
@@ -19,6 +27,9 @@ create policy "anyone can read records" on records
 
 create policy "anyone can insert records" on records
   for insert with check (true);
+
+create policy "anyone can update records" on records
+  for update using (true) with check (true);
 
 create policy "anyone can delete records" on records
   for delete using (true);

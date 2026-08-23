@@ -601,6 +601,10 @@
                     id="receiptItemsList"
                     class="divide-y divide-outline/60 mb-3"
                 ></ul>
+                <p
+                    id="receiptTotalMismatchWarning"
+                    class="hidden text-xs text-gyellow bg-gyellow/10 rounded-lg px-3 py-2 mb-3"
+                ></p>
                 <div
                     id="receiptTotals"
                     class="hidden border-t border-outline pt-3 space-y-1 mb-4"
@@ -632,6 +636,127 @@
                         class="hidden flex-1 py-2.5 rounded-lg bg-gblue hover:bg-gblue-dark text-white text-sm font-medium transition"
                     >
                         Usar estos datos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- expense detail / edit dialog: opened by clicking a history item -->
+        <div
+            id="expenseDetailOverlay"
+            class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(32,33,36,.6)] p-4"
+        >
+            <div
+                class="bg-surface rounded-2xl elevation-3 p-5 max-w-sm w-full max-h-[85vh] overflow-y-auto"
+            >
+                <h3 class="text-base font-medium text-onsurface mb-1">
+                    Detalle del gasto
+                </h3>
+                <p
+                    id="expenseDetailMeta"
+                    class="text-sm text-onsurfaceVariant mb-3"
+                ></p>
+
+                <div class="space-y-3">
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant"
+                            style="font-size: 20px"
+                            >receipt_long</span
+                        >
+                        <input
+                            id="expenseDetailDescription"
+                            type="text"
+                            maxlength="80"
+                            class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                        />
+                    </div>
+                    <div class="relative">
+                        <span
+                            class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-onsurfaceVariant"
+                            style="font-size: 20px"
+                            >euro</span
+                        >
+                        <input
+                            id="expenseDetailAmount"
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            class="w-full rounded-lg border border-outline pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                        />
+                    </div>
+
+                    <div class="border border-outline rounded-lg p-3">
+                        <label
+                            class="flex items-center gap-2 cursor-pointer select-none"
+                        >
+                            <input
+                                id="expenseDetailSplitToggle"
+                                type="checkbox"
+                                class="w-4 h-4 rounded border-outline text-gblue focus:ring-gblue-light"
+                            />
+                            <span
+                                class="material-symbols-outlined text-onsurfaceVariant"
+                                style="font-size: 20px"
+                                >call_split</span
+                            >
+                            <span class="text-sm text-onsurface"
+                                >Dividir la cuenta entre varias personas</span
+                            >
+                        </label>
+                        <div
+                            id="expenseDetailSplitFields"
+                            class="hidden grid grid-cols-2 gap-3 mt-3"
+                        >
+                            <div>
+                                <input
+                                    id="expenseDetailSplitPeople"
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    placeholder="Nº de personas"
+                                    class="w-full rounded-lg border border-outline px-3 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                                />
+                                <p class="text-xs text-onsurfaceVariant mt-1">
+                                    Entre cuántas personas se divide
+                                </p>
+                            </div>
+                            <div>
+                                <input
+                                    id="expenseDetailSplitPaidParts"
+                                    type="number"
+                                    step="1"
+                                    min="0"
+                                    placeholder="Sus partes"
+                                    class="w-full rounded-lg border border-outline px-3 py-2.5 text-sm focus:outline-none focus:border-gblue focus:ring-2 focus:ring-gblue-light"
+                                />
+                                <p class="text-xs text-onsurfaceVariant mt-1">
+                                    Cuántas partes pagó
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p
+                        id="expenseDetailComputed"
+                        class="text-sm text-onsurfaceVariant"
+                    ></p>
+                </div>
+
+                <div class="flex gap-2 mt-4">
+                    <button
+                        type="button"
+                        id="expenseDetailCancelBtn"
+                        class="flex-1 py-2.5 rounded-lg border border-outline text-sm font-medium text-onsurface hover:bg-bg transition"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="button"
+                        id="expenseDetailSaveBtn"
+                        class="flex-1 py-2.5 rounded-lg bg-gblue hover:bg-gblue-dark text-white text-sm font-medium transition"
+                    >
+                        Guardar
                     </button>
                 </div>
             </div>
@@ -727,6 +852,7 @@
             let receiptOverride = null; // { total, mine, debt } once a receipt has been analyzed and confirmed
             let receiptAnalyzedItems = []; // [{ name, price }] currently listed in the receipt modal (OCR + manual edits)
             let receiptAnalyzedTotal = 0; // total amount for the items currently listed
+            let receiptPrintedTotal = null; // the receipt's own printed total, if OCR found one — cross-check only, never used in the math
 
             function rowToRecord(row) {
                 return {
@@ -736,8 +862,42 @@
                     amount: Number(row.amount),
                     paidBy: row.paid_by,
                     contribution: Number(row.contribution),
+                    splitPeople: row.split_people,
+                    splitPaidParts: row.split_paid_parts,
                     date: row.created_at,
                 };
+            }
+
+            // shared by the "add expense" form and the edit dialog: works out how
+            // much of the total is actually owed by the other person (the "debt"),
+            // and the signed contribution that feeds computeBalance().
+            // `payerShare` is the part of the total that's already the payer's own
+            // (e.g. their share from a scanned receipt) — it's ignored once a manual
+            // people/parts split is enabled, since that takes over the whole amount.
+            function computeDebtAndContribution(
+                paidBy,
+                amount,
+                splitEnabled,
+                splitPeople,
+                splitPaidParts,
+                payerShare = 0,
+            ) {
+                let debt = amount - payerShare;
+                if (splitEnabled) {
+                    if (
+                        !splitPeople ||
+                        splitPeople < 1 ||
+                        isNaN(splitPaidParts) ||
+                        splitPaidParts < 0 ||
+                        splitPaidParts > splitPeople
+                    ) {
+                        return null;
+                    }
+                    const perPerson = amount / splitPeople;
+                    debt = amount - perPerson * splitPaidParts;
+                }
+                const contribution = paidBy === "Angel" ? debt : -debt;
+                return { debt, contribution };
             }
 
             // one-time upload of whatever was previously saved in this browser's localStorage
@@ -842,6 +1002,10 @@
             <span class="text-sm font-medium text-ggreen shrink-0">${fmt(r.amount)} €</span>
             <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="deleteRecord('${r.id}')">delete</button>`;
                         } else {
+                            li.className += " cursor-pointer";
+                            li.addEventListener("click", () =>
+                                openExpenseDetail(r.id),
+                            );
                             li.innerHTML = `
             <div class="w-8 h-8 rounded-full overflow-hidden bg-gblue-light flex items-center justify-center shrink-0">
               <img src="${USERS[r.paidBy].img}" alt="${r.paidBy}" class="w-full h-full object-cover face-zoom" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
@@ -851,8 +1015,8 @@
               <p class="text-sm font-medium text-onsurface truncate">${r.description}</p>
               <p class="text-xs text-onsurfaceVariant">${r.paidBy} · ${dateStr}</p>
             </div>
-            <span class="text-sm font-medium text-onsurface shrink-0">${fmt(r.amount)} €</span>
-            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="deleteRecord('${r.id}')">delete</button>`;
+            <span class="text-sm font-medium text-onsurface shrink-0">${fmt(Math.abs(r.contribution))} €</span>
+            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="event.stopPropagation(); deleteRecord('${r.id}')">delete</button>`;
                         }
                         list.appendChild(li);
                     });
@@ -868,6 +1032,190 @@
                     console.error(error);
                     return;
                 }
+                await loadRecords();
+                render();
+            }
+
+            let expenseDetailRecordId = null;
+
+            function openExpenseDetail(id) {
+                const record = records.find((r) => r.id === id);
+                if (!record) return;
+
+                expenseDetailRecordId = id;
+
+                const dateStr = new Date(record.date).toLocaleDateString(
+                    "es-ES",
+                    { day: "2-digit", month: "short", year: "numeric" },
+                );
+                document.getElementById("expenseDetailMeta").textContent =
+                    `Pagado por ${record.paidBy} · ${dateStr}`;
+                document.getElementById(
+                    "expenseDetailDescription",
+                ).value = record.description;
+                document.getElementById("expenseDetailAmount").value =
+                    record.amount;
+
+                const splitEnabled = !!record.splitPeople;
+                document.getElementById(
+                    "expenseDetailSplitToggle",
+                ).checked = splitEnabled;
+                document
+                    .getElementById("expenseDetailSplitFields")
+                    .classList.toggle("hidden", !splitEnabled);
+                document.getElementById("expenseDetailSplitPeople").value =
+                    record.splitPeople || "";
+                document.getElementById(
+                    "expenseDetailSplitPaidParts",
+                ).value = record.splitPaidParts ?? "";
+
+                updateExpenseDetailComputed();
+
+                const overlay = document.getElementById(
+                    "expenseDetailOverlay",
+                );
+                overlay.classList.remove("hidden");
+                overlay.classList.add("flex");
+            }
+
+            function closeExpenseDetail() {
+                expenseDetailRecordId = null;
+                const overlay = document.getElementById(
+                    "expenseDetailOverlay",
+                );
+                overlay.classList.add("hidden");
+                overlay.classList.remove("flex");
+            }
+
+            // live preview of what the edited fields would mean for the debt,
+            // shown above the save button so a person can see the effect before saving
+            function updateExpenseDetailComputed() {
+                const record = records.find(
+                    (r) => r.id === expenseDetailRecordId,
+                );
+                const computedEl = document.getElementById(
+                    "expenseDetailComputed",
+                );
+                if (!record) {
+                    computedEl.textContent = "";
+                    return;
+                }
+
+                const amount = parseFloat(
+                    document.getElementById("expenseDetailAmount").value,
+                );
+                const splitEnabled = document.getElementById(
+                    "expenseDetailSplitToggle",
+                ).checked;
+                const splitPeople = parseInt(
+                    document.getElementById("expenseDetailSplitPeople")
+                        .value,
+                    10,
+                );
+                const splitPaidParts = parseInt(
+                    document.getElementById("expenseDetailSplitPaidParts")
+                        .value,
+                    10,
+                );
+
+                if (!amount || amount <= 0) {
+                    computedEl.textContent = "";
+                    return;
+                }
+
+                const payerShare =
+                    record.amount - Math.abs(record.contribution);
+                const result = computeDebtAndContribution(
+                    record.paidBy,
+                    amount,
+                    splitEnabled,
+                    splitPeople,
+                    splitPaidParts,
+                    payerShare,
+                );
+                if (!result) {
+                    computedEl.textContent =
+                        "Revisa el número de personas y de partes.";
+                    return;
+                }
+
+                const other =
+                    record.paidBy === "Angel" ? "Nelson" : "Angel";
+                if (splitEnabled) {
+                    computedEl.textContent = `Dividido entre ${splitPeople} personas · se añade ${fmtEuro(result.debt)} a la deuda de ${other}`;
+                } else if (payerShare > 0.005) {
+                    computedEl.textContent = `De una factura analizada: ${record.paidBy} ya cubrió ${fmtEuro(payerShare)} de lo suyo · se añade ${fmtEuro(result.debt)} a la deuda de ${other}`;
+                } else {
+                    computedEl.textContent = `No dividido · se añade ${fmtEuro(result.debt)} a la deuda de ${other}`;
+                }
+            }
+
+            async function saveExpenseEdit() {
+                const record = records.find(
+                    (r) => r.id === expenseDetailRecordId,
+                );
+                if (!record) return;
+
+                const description = document
+                    .getElementById("expenseDetailDescription")
+                    .value.trim();
+                const amount = parseFloat(
+                    document.getElementById("expenseDetailAmount").value,
+                );
+                if (!description || !amount || amount <= 0) return;
+
+                const splitEnabled = document.getElementById(
+                    "expenseDetailSplitToggle",
+                ).checked;
+                const splitPeople = splitEnabled
+                    ? parseInt(
+                          document.getElementById("expenseDetailSplitPeople")
+                              .value,
+                          10,
+                      )
+                    : null;
+                const splitPaidParts = splitEnabled
+                    ? parseInt(
+                          document.getElementById(
+                              "expenseDetailSplitPaidParts",
+                          ).value,
+                          10,
+                      )
+                    : null;
+
+                const payerShare =
+                    record.amount - Math.abs(record.contribution);
+                const result = computeDebtAndContribution(
+                    record.paidBy,
+                    amount,
+                    splitEnabled,
+                    splitPeople,
+                    splitPaidParts,
+                    payerShare,
+                );
+                if (!result) {
+                    alert(
+                        "Revisa el número de personas y de partes: las partes pagadas no pueden superar el número de personas.",
+                    );
+                    return;
+                }
+
+                const { error } = await supabaseClient
+                    .from("records")
+                    .update({
+                        description,
+                        amount,
+                        contribution: result.contribution,
+                        split_people: splitPeople,
+                        split_paid_parts: splitPaidParts,
+                    })
+                    .eq("id", record.id);
+                if (error) {
+                    console.error(error);
+                    return;
+                }
+
+                closeExpenseDetail();
                 await loadRecords();
                 render();
             }
@@ -946,47 +1294,46 @@
 
                         if (!description || !amount || amount <= 0) return;
 
-                        let debt = amount;
+                        let contribution;
+                        let splitPeople = null;
+                        let splitPaidParts = null;
                         if (receiptOverride) {
-                            debt = receiptOverride.debt;
+                            const debt = receiptOverride.debt;
+                            contribution =
+                                currentUser === "Angel" ? debt : -debt;
                         } else {
                             const splitEnabled =
                                 document.getElementById(
                                     "splitToggle",
                                 ).checked;
                             if (splitEnabled) {
-                                const splitPeople = parseInt(
+                                splitPeople = parseInt(
                                     document.getElementById("splitPeople")
                                         .value,
                                     10,
                                 );
-                                const splitPaidParts = parseInt(
+                                splitPaidParts = parseInt(
                                     document.getElementById(
                                         "splitPaidParts",
                                     ).value,
                                     10,
                                 );
-                                if (
-                                    !splitPeople ||
-                                    splitPeople < 1 ||
-                                    isNaN(splitPaidParts) ||
-                                    splitPaidParts < 0 ||
-                                    splitPaidParts > splitPeople
-                                ) {
-                                    alert(
-                                        "Revisa el número de personas y de partes: las partes que pagas no pueden superar el número de personas.",
-                                    );
-                                    return;
-                                }
-                                const perPerson = amount / splitPeople;
-                                debt = amount - perPerson * splitPaidParts;
                             }
+                            const result = computeDebtAndContribution(
+                                currentUser,
+                                amount,
+                                splitEnabled,
+                                splitPeople,
+                                splitPaidParts,
+                            );
+                            if (!result) {
+                                alert(
+                                    "Revisa el número de personas y de partes: las partes que pagas no pueden superar el número de personas.",
+                                );
+                                return;
+                            }
+                            contribution = result.contribution;
                         }
-
-                        // the person who paid is owed `debt` by the other person
-                        // (the full amount unless the bill was split)
-                        const contribution =
-                            currentUser === "Angel" ? debt : -debt;
 
                         const { error } = await supabaseClient
                             .from("records")
@@ -996,6 +1343,8 @@
                                 amount,
                                 paid_by: currentUser,
                                 contribution,
+                                split_people: splitPeople,
+                                split_paid_parts: splitPaidParts,
                             });
                         if (error) {
                             console.error(error);
@@ -1118,6 +1467,30 @@
                     .getElementById("receiptClearBtn")
                     .addEventListener("click", clearReceiptOverride);
 
+                document
+                    .getElementById("expenseDetailSplitToggle")
+                    .addEventListener("change", (e) => {
+                        document
+                            .getElementById("expenseDetailSplitFields")
+                            .classList.toggle("hidden", !e.target.checked);
+                        updateExpenseDetailComputed();
+                    });
+                [
+                    "expenseDetailAmount",
+                    "expenseDetailSplitPeople",
+                    "expenseDetailSplitPaidParts",
+                ].forEach((id) =>
+                    document
+                        .getElementById(id)
+                        .addEventListener("input", updateExpenseDetailComputed),
+                );
+                document
+                    .getElementById("expenseDetailCancelBtn")
+                    .addEventListener("click", closeExpenseDetail);
+                document
+                    .getElementById("expenseDetailSaveBtn")
+                    .addEventListener("click", saveExpenseEdit);
+
                 await migrateLocalStorageIfNeeded();
                 await loadRecords();
                 render();
@@ -1147,8 +1520,30 @@
                 document
                     .getElementById("receiptConfirmBtn")
                     .classList.add("hidden");
+                document
+                    .getElementById("receiptTotalMismatchWarning")
+                    .classList.add("hidden");
                 receiptAnalyzedItems = [];
                 receiptAnalyzedTotal = 0;
+                receiptPrintedTotal = null;
+            }
+
+            // The printed total is a cross-check only, never part of the math —
+            // a mismatch usually means a tax/summary line slipped in as a bogus
+            // item, or a real item got missed, and "×" is how to fix either one.
+            function updateReceiptMismatchWarning() {
+                const warning = document.getElementById(
+                    "receiptTotalMismatchWarning",
+                );
+                if (
+                    receiptPrintedTotal != null &&
+                    Math.abs(receiptPrintedTotal - receiptAnalyzedTotal) > 0.05
+                ) {
+                    warning.textContent = `La factura impresa dice ${fmtEuro(receiptPrintedTotal)}, pero los items suman ${fmtEuro(receiptAnalyzedTotal)}. Revisa la lista y borra algún item con "×" si sobra o falta.`;
+                    warning.classList.remove("hidden");
+                } else {
+                    warning.classList.add("hidden");
+                }
             }
 
             function removeReceiptItem(index) {
@@ -1158,6 +1553,7 @@
                     0,
                 );
                 renderReceiptItems(receiptAnalyzedItems, receiptAnalyzedTotal);
+                updateReceiptMismatchWarning();
                 if (receiptAnalyzedItems.length === 0) {
                     document
                         .getElementById("receiptTotals")
@@ -1194,6 +1590,7 @@
 
                     receiptAnalyzedItems = parsed.items;
                     receiptAnalyzedTotal = parsed.total;
+                    receiptPrintedTotal = parsed.printedTotal;
                     renderReceiptItems(
                         receiptAnalyzedItems,
                         receiptAnalyzedTotal,
@@ -1208,6 +1605,7 @@
                         document
                             .getElementById("receiptConfirmBtn")
                             .classList.remove("hidden");
+                        updateReceiptMismatchWarning();
                     } else {
                         status.textContent =
                             "No se detectaron items en la foto. Prueba con más luz y encuadrando solo el recibo.";
@@ -1524,7 +1922,7 @@
                 const priceTokenRegex =
                     /([0-9OolISBs]{1,4}[.,][0-9OolISBs]{2})/g;
                 const skipWordsRegex =
-                    /\b(iva|base|cambio|efectivo|tarjeta|subtotal|nif|cif|ticket|factura|fecha|hora|caja|gracias|descuento)\b/i;
+                    /\b(iva|base|cuota|imponible|impuestos?|cambio|efectivo|tarjeta|subtotal|nif|cif|ticket|factura|fecha|hora|caja|gracias|descuento)\b/i;
 
                 const lines = text
                     .split("\n")
@@ -1532,6 +1930,7 @@
                     .filter(Boolean);
 
                 const items = [];
+                let detectedTotal = null;
 
                 for (const line of lines) {
                     const matches = [...line.matchAll(priceTokenRegex)];
@@ -1559,9 +1958,16 @@
                         /\btotal\b/i.test(name) &&
                         !/\bsub\s*total\b/i.test(name);
 
-                    // skip it entirely rather than treat it as a line item — its
-                    // value isn't used; see the note above the return statement.
-                    if (looksLikeTotalMarker || looksLikeTotalWord) continue;
+                    if (looksLikeTotalMarker || looksLikeTotalWord) {
+                        // keep the largest total-looking value found — receipts
+                        // often print several ("Base", "Cuota", then the real
+                        // grand total further down), and the grand total is
+                        // reliably the biggest of the bunch.
+                        if (detectedTotal === null || price > detectedTotal) {
+                            detectedTotal = price;
+                        }
+                        continue;
+                    }
 
                     if (!name) continue;
                     if (skipWordsRegex.test(name)) continue;
@@ -1569,16 +1975,17 @@
                     items.push({ name, price });
                 }
 
-                // The total is always the sum of the items actually shown in the
-                // list, never the receipt's own printed total line — OCR can lose
-                // or misread an item, and a total that doesn't match what's
-                // selectable would let "te toca pagar" exceed "total de la
-                // factura", which makes no sense. detectedTotal is only used to
-                // recognize (and thus exclude) that line so it isn't added as a
-                // bogus item.
+                // The total used for the math is always the sum of the items
+                // actually shown in the list, never the receipt's own printed
+                // total line — OCR can lose or misread an item, and a total that
+                // doesn't match what's selectable would let "te toca pagar"
+                // exceed "total de la factura", which makes no sense.
+                // printedTotal is returned separately purely so the caller can
+                // flag a mismatch for the user to go fix (delete a bogus/duplicate
+                // item) — it's never used in the actual calculation.
                 const sum = items.reduce((s, it) => s + it.price, 0);
 
-                return { items, total: sum };
+                return { items, total: sum, printedTotal: detectedTotal };
             }
 
             function renderReceiptItems(items, total) {

@@ -1150,6 +1150,8 @@
                 }
             }
 
+            let isSubmittingExpense = false;
+
             async function saveExpenseEdit() {
                 const record = records.find(
                     (r) => r.id === expenseDetailRecordId,
@@ -1285,6 +1287,9 @@
                     .getElementById("expenseForm")
                     .addEventListener("submit", async (e) => {
                         e.preventDefault();
+                        // Evita agregar el mismo gasto varias veces si se
+                        // presiona el botón repetidamente mientras se guarda.
+                        if (isSubmittingExpense) return;
                         const description = document
                             .getElementById("description")
                             .value.trim();
@@ -1335,23 +1340,41 @@
                             contribution = result.contribution;
                         }
 
-                        const { error } = await supabaseClient
-                            .from("records")
-                            .insert({
-                                type: "expense",
-                                description,
-                                amount,
-                                paid_by: currentUser,
-                                contribution,
-                                split_people: splitPeople,
-                                split_paid_parts: splitPaidParts,
-                            });
-                        if (error) {
-                            console.error(error);
-                            return;
-                        }
+                        isSubmittingExpense = true;
+                        const submitBtn = document.getElementById("submitBtn");
+                        const submitBtnText =
+                            document.getElementById("submitBtnText");
+                        const originalBtnText = submitBtnText.textContent;
+                        submitBtn.disabled = true;
+                        submitBtn.classList.add("opacity-60", "cursor-not-allowed");
+                        submitBtnText.textContent = "Guardando…";
+                        try {
+                            const { error } = await supabaseClient
+                                .from("records")
+                                .insert({
+                                    type: "expense",
+                                    description,
+                                    amount,
+                                    paid_by: currentUser,
+                                    contribution,
+                                    split_people: splitPeople,
+                                    split_paid_parts: splitPaidParts,
+                                });
+                            if (error) {
+                                console.error(error);
+                                return;
+                            }
 
-                        await loadRecords();
+                            await loadRecords();
+                        } finally {
+                            isSubmittingExpense = false;
+                            submitBtn.disabled = false;
+                            submitBtn.classList.remove(
+                                "opacity-60",
+                                "cursor-not-allowed",
+                            );
+                            submitBtnText.textContent = originalBtnText;
+                        }
                         render();
                         showPaymentAnimation(currentUser, amount, description);
                         confetti({

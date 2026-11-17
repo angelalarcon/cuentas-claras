@@ -1,0 +1,18 @@
+{
+  "name": "cuentas-claras",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply cuentas-claras --remote"
+  },
+  "devDependencies": {
+    "@fontsource/pirata-one": "^5.3.0",
+    "@fontsource/roboto": "^5.3.0",
+    "@material-symbols/svg-400": "^0.49.0",
+    "tailwindcss": "^3.4.17",
+    "wrangler": "^4.163.0"
+  }
+}

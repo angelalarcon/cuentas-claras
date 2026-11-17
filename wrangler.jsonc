@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "cuentas-claras",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // la página principal pasa por el Worker para incrustar el historial
+    // en el HTML y que se vea al instante, sin esperar una segunda petición
+    "run_worker_first": ["/", "/index.html", "/api/*"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "cuentas-claras",
+      "database_id": "e4c46045-ca3c-4a4f-873d-1dbf1b9f92ab",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "observability": { "enabled": true }
+}

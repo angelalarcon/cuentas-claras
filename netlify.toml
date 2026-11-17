@@ -1,2 +1,12 @@
+# La app ahora vive en Cloudflare (Worker + D1). Mientras el sitio de Netlify
+# siga existiendo, redirige todo (incluido ?user=...) a la nueva dirección.
+# Se puede borrar este archivo cuando se elimine el sitio de Netlify.
 [build]
-  publish = "."
+  publish = "netlify"
+  command = "mkdir -p netlify"
+
+[[redirects]]
+  from = "/*"
+  to = "https://cuentas-claras.angelalarcon-aa.workers.dev/:splat"
+  status = 301
+  force = true

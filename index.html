@@ -1150,7 +1150,24 @@
                 }
             }
 
-            let isSubmittingExpense = false;
+            // Bloquea un botón mientras se ejecuta una acción asíncrona para
+            // evitar que varios clics seguidos la ejecuten más de una vez.
+            async function withButtonLock(btn, task, { labelEl, busyText } = {}) {
+                if (btn.dataset.busy === "1") return;
+                btn.dataset.busy = "1";
+                btn.disabled = true;
+                btn.classList.add("opacity-60", "cursor-not-allowed");
+                const originalText = labelEl ? labelEl.textContent : null;
+                if (labelEl && busyText) labelEl.textContent = busyText;
+                try {
+                    return await task();
+                } finally {
+                    delete btn.dataset.busy;
+                    btn.disabled = false;
+                    btn.classList.remove("opacity-60", "cursor-not-allowed");
+                    if (labelEl && busyText) labelEl.textContent = originalText;
+                }
+            }
 
             async function saveExpenseEdit() {
                 const record = records.find(
@@ -1289,7 +1306,8 @@
                         e.preventDefault();
                         // Evita agregar el mismo gasto varias veces si se
                         // presiona el botón repetidamente mientras se guarda.
-                        if (isSubmittingExpense) return;
+                        const submitBtn = document.getElementById("submitBtn");
+                        if (submitBtn.dataset.busy === "1") return;
                         const description = document
                             .getElementById("description")
                             .value.trim();
@@ -1340,41 +1358,33 @@
                             contribution = result.contribution;
                         }
 
-                        isSubmittingExpense = true;
-                        const submitBtn = document.getElementById("submitBtn");
-                        const submitBtnText =
-                            document.getElementById("submitBtnText");
-                        const originalBtnText = submitBtnText.textContent;
-                        submitBtn.disabled = true;
-                        submitBtn.classList.add("opacity-60", "cursor-not-allowed");
-                        submitBtnText.textContent = "Guardando…";
-                        try {
-                            const { error } = await supabaseClient
-                                .from("records")
-                                .insert({
-                                    type: "expense",
-                                    description,
-                                    amount,
-                                    paid_by: currentUser,
-                                    contribution,
-                                    split_people: splitPeople,
-                                    split_paid_parts: splitPaidParts,
-                                });
-                            if (error) {
-                                console.error(error);
-                                return;
-                            }
-
-                            await loadRecords();
-                        } finally {
-                            isSubmittingExpense = false;
-                            submitBtn.disabled = false;
-                            submitBtn.classList.remove(
-                                "opacity-60",
-                                "cursor-not-allowed",
-                            );
-                            submitBtnText.textContent = originalBtnText;
-                        }
+                        const saved = await withButtonLock(
+                            submitBtn,
+                            async () => {
+                                const { error } = await supabaseClient
+                                    .from("records")
+                                    .insert({
+                                        type: "expense",
+                                        description,
+                                        amount,
+                                        paid_by: currentUser,
+                                        contribution,
+                                        split_people: splitPeople,
+                                        split_paid_parts: splitPaidParts,
+                                    });
+                                if (error) {
+                                    console.error(error);
+                                    return false;
+                                }
+                                await loadRecords();
+                                return true;
+                            },
+                            {
+                                labelEl: document.getElementById("submitBtnText"),
+                                busyText: "Guardando…",
+                            },
+                        );
+                        if (!saved) return;
                         render();
                         showPaymentAnimation(currentUser, amount, description);
                         confetti({
@@ -1401,37 +1411,41 @@
 
                 document
                     .getElementById("settleBtn")
-                    .addEventListener("click", async () => {
-                        const balance = computeBalance();
-                        if (Math.abs(balance) < 0.005) return;
+                    .addEventListener("click", (e) =>
+                        withButtonLock(e.currentTarget, settleDebt),
+                    );
 
-                        const debtor = balance > 0 ? "Nelson" : "Angel";
-                        const creditor =
-                            debtor === "Nelson" ? "Angel" : "Nelson";
-                        const amount = Math.abs(balance);
+                async function settleDebt() {
+                    const balance = computeBalance();
+                    if (Math.abs(balance) < 0.005) return;
 
-                        const { error } = await supabaseClient
-                            .from("records")
-                            .insert({
-                                type: "settlement",
-                                description: `Liquidación: ${debtor} le pagó a ${creditor}`,
-                                amount,
-                                paid_by: debtor,
-                                contribution: -balance,
-                            });
-                        if (error) {
-                            console.error(error);
-                            return;
-                        }
+                    const debtor = balance > 0 ? "Nelson" : "Angel";
+                    const creditor =
+                        debtor === "Nelson" ? "Angel" : "Nelson";
+                    const amount = Math.abs(balance);
 
-                        await loadRecords();
-                        render();
-                        showPaymentAnimation(
-                            debtor,
+                    const { error } = await supabaseClient
+                        .from("records")
+                        .insert({
+                            type: "settlement",
+                            description: `Liquidación: ${debtor} le pagó a ${creditor}`,
                             amount,
-                            "Liquidación de la deuda",
-                        );
-                    });
+                            paid_by: debtor,
+                            contribution: -balance,
+                        });
+                    if (error) {
+                        console.error(error);
+                        return;
+                    }
+
+                    await loadRecords();
+                    render();
+                    showPaymentAnimation(
+                        debtor,
+                        amount,
+                        "Liquidación de la deuda",
+                    );
+                }
 
                 document
                     .getElementById("receiptBtn")
@@ -1512,7 +1526,12 @@
                     .addEventListener("click", closeExpenseDetail);
                 document
                     .getElementById("expenseDetailSaveBtn")
-                    .addEventListener("click", saveExpenseEdit);
+                    .addEventListener("click", (e) =>
+                        withButtonLock(e.currentTarget, saveExpenseEdit, {
+                            labelEl: e.currentTarget,
+                            busyText: "Guardando…",
+                        }),
+                    );
 
                 await migrateLocalStorageIfNeeded();
                 await loadRecords();

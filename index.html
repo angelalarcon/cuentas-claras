@@ -762,6 +762,46 @@
             </div>
         </div>
 
+        <!-- confirmación para borrar un registro del historial -->
+        <div
+            id="deleteConfirmOverlay"
+            class="fixed inset-0 z-50 hidden items-center justify-center bg-[rgba(32,33,36,.6)] p-4"
+        >
+            <div
+                class="bg-surface rounded-2xl elevation-3 p-5 max-w-sm w-full"
+                role="alertdialog"
+                aria-modal="true"
+                aria-labelledby="deleteConfirmTitle"
+            >
+                <h3
+                    id="deleteConfirmTitle"
+                    class="text-base font-medium text-onsurface mb-1"
+                >
+                    ¿Seguro que quieres borrar este registro?
+                </h3>
+                <p
+                    id="deleteConfirmMessage"
+                    class="text-sm text-onsurfaceVariant mb-4 break-words"
+                ></p>
+                <div class="flex gap-2">
+                    <button
+                        type="button"
+                        id="deleteConfirmNoBtn"
+                        class="flex-1 py-2.5 rounded-lg border border-outline text-sm font-medium text-onsurface hover:bg-bg transition"
+                    >
+                        No
+                    </button>
+                    <button
+                        type="button"
+                        id="deleteConfirmYesBtn"
+                        class="flex-1 py-2.5 rounded-lg bg-gred hover:opacity-90 text-white text-sm font-medium transition"
+                    >
+                        Sí, borrar
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <script src="https://cdn.jsdelivr.net/npm/tsparticles@2/tsparticles.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/tsparticles-confetti@2/tsparticles.confetti.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1000,7 +1040,7 @@
               <p class="text-xs text-onsurfaceVariant">${dateStr}</p>
             </div>
             <span class="text-sm font-medium text-ggreen shrink-0">${fmt(r.amount)} €</span>
-            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="deleteRecord('${r.id}')">delete</button>`;
+            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="confirmDeleteRecord('${r.id}')">delete</button>`;
                         } else {
                             li.className += " cursor-pointer";
                             li.addEventListener("click", () =>
@@ -1016,7 +1056,7 @@
               <p class="text-xs text-onsurfaceVariant">${r.paidBy} · ${dateStr}</p>
             </div>
             <span class="text-sm font-medium text-onsurface shrink-0">${fmt(Math.abs(r.contribution))} €</span>
-            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="event.stopPropagation(); deleteRecord('${r.id}')">delete</button>`;
+            <button class="material-symbols-outlined text-onsurfaceVariant hover:text-gred transition shrink-0" style="font-size:20px" onclick="event.stopPropagation(); confirmDeleteRecord('${r.id}')">delete</button>`;
                         }
                         list.appendChild(li);
                     });
@@ -1034,6 +1074,31 @@
                 }
                 await loadRecords();
                 render();
+            }
+
+            let deleteConfirmRecordId = null;
+
+            function confirmDeleteRecord(id) {
+                const record = records.find((r) => r.id === id);
+                deleteConfirmRecordId = id;
+                const message = document.getElementById(
+                    "deleteConfirmMessage",
+                );
+                // textContent evita interpretar la descripción como HTML.
+                message.textContent = record
+                    ? `"${record.description}" se borrará del historial. Esta acción no se puede deshacer.`
+                    : "Esta acción no se puede deshacer.";
+                const overlay = document.getElementById("deleteConfirmOverlay");
+                overlay.classList.remove("hidden");
+                overlay.classList.add("flex");
+                document.getElementById("deleteConfirmNoBtn").focus();
+            }
+
+            function closeDeleteConfirm() {
+                deleteConfirmRecordId = null;
+                const overlay = document.getElementById("deleteConfirmOverlay");
+                overlay.classList.add("hidden");
+                overlay.classList.remove("flex");
             }
 
             let expenseDetailRecordId = null;
@@ -1531,6 +1596,36 @@
                             labelEl: e.currentTarget,
                             busyText: "Guardando…",
                         }),
+                    );
+
+                document
+                    .getElementById("deleteConfirmNoBtn")
+                    .addEventListener("click", closeDeleteConfirm);
+                document
+                    .getElementById("deleteConfirmOverlay")
+                    .addEventListener("click", (e) => {
+                        if (e.target === e.currentTarget) closeDeleteConfirm();
+                    });
+                document.addEventListener("keydown", (e) => {
+                    if (
+                        e.key === "Escape" &&
+                        deleteConfirmRecordId !== null
+                    )
+                        closeDeleteConfirm();
+                });
+                document
+                    .getElementById("deleteConfirmYesBtn")
+                    .addEventListener("click", (e) =>
+                        withButtonLock(
+                            e.currentTarget,
+                            async () => {
+                                const id = deleteConfirmRecordId;
+                                if (id === null) return;
+                                await deleteRecord(id);
+                                closeDeleteConfirm();
+                            },
+                            { labelEl: e.currentTarget, busyText: "Borrando…" },
+                        ),
                     );
 
                 await migrateLocalStorageIfNeeded();
